@@ -47,8 +47,12 @@ img_back = np.fft.ifft2(f_ishift)
 # complex -> real number
 img_back = np.abs(img_back)
 
+# need to ensure that array elements are encoded as uint8
+# to work with cv2.imshow()
+img_back = np.array(img_back, dtype=np.uint8)
+
 # show using matplotlib
-plt.imshow(img_back, cmap = 'gray')
+plt.imshow(img_back, cmap='gray')
 
 # show using opencv
 cv2.imshow("Should be the same", img_back)

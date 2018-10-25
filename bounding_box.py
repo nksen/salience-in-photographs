@@ -88,7 +88,7 @@ class Box(object):
         Calculates the cost bounded by the box.
         Changing to a more detailed calculation.
         """
-        return np.sum(self._data)/max(self._data.shape)
+        return np.sum(self._data)/(self.shape[0] * self.shape[1])
 
     # ~~ Methods ~~ #
     def translate(self, vector):
@@ -226,13 +226,14 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
         current_box.resize(step_size * best_vector[1])
 
     return current_box
-        
+
+
 if __name__ == "__main__":
     """
     For testing only.
     """
     # load image
-    image = cv2.imread("./images/birds_salience_map.jpg", 0)
+    image = cv2.imread("../mphys-testing/salience-in-photographs/images/birds_salience_map.jpg", 0)
     starting_box = Box(image, np.array([200, 55]), np.array([100, 100]))
     directions_list = np.array(
         [

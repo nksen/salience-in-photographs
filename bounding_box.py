@@ -3,8 +3,9 @@
 --Toby Ticehurst--
 Oct 18
 
-Box class and accompanying functions.
+bounding_box.py
 
+Box class and accompanying functions.
 """
 
 import cv2
@@ -247,7 +248,7 @@ if __name__ == "__main__":
             [[0, 0], [0, -1]]
         ])
     
-    lowest_cost_box = minimise_cost(starting_box, 10, 1000, directions_list)
+    lowest_cost_box = minimise_cost(starting_box, 10, 0, directions_list)
 
     cv2.imshow("box", lowest_cost_box.overlay_box(lowest_cost_box.image))
     cv2.waitKey()

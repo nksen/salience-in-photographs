@@ -53,7 +53,9 @@ class Box(object):
             raise ValueError("Anchor point must be non-negative.")
         if any(element < 0 for element in dims):
             raise ValueError("Dimensions must be non-negative.")
-
+        if any(element < 0 for element in minimum_size):
+            raise ValueError("Min size must be non-negative.")
+        
         # check that dimensions are large than minimum_size
         if dims[0] < minimum_size[0]:
             raise ValueError("i'th dimension is less than minimum size.")
@@ -64,10 +66,18 @@ class Box(object):
         self._box_tl = box_tl
         self._dims = dims
         self._img = image
+        self._min_size = minimum_size
+        # compute and check box_br
+        box_br = np.add(box_tl, dims)
+        if box_br[0] > image.shape[0] or box_br[1] > image.shape[1]:
+            raise ValueError("Box drawn out of range.")
+        else:
+            self._box_br = box_br
+        
         # grab data inside box from image
         # create numpy mask
-        mask_i = np.arange(box_tl[0], box_tl[0]+dims[0], 1).tolist()
-        mask_j = np.arange(box_tl[1], box_tl[1]+dims[1], 1).tolist()
+        mask_i = np.arange(box_tl[0], box_br[0], 1).tolist()
+        mask_j = np.arange(box_tl[1], box_br[1], 1).tolist()
         ixgrid = np.ix_(mask_i, mask_j)
         # _data should never really be changed
         self._data = image[ixgrid]
@@ -76,6 +86,10 @@ class Box(object):
     @property
     def box_tl(self):
         return self._box_tl
+
+    @property
+    def box_br(self):
+        return self._box_br
   
     @property
     def shape(self):
@@ -112,7 +126,7 @@ class Box(object):
         # new anchor point
         new_anchor = np.add(self.box_tl, vector)
         # construct a new box object
-        self = self.__init__(self.image, new_anchor, self.shape)
+        self = self.__init__(self.image, new_anchor, self.shape, self._min_size)
 
     def resize(self, vector):
         """
@@ -127,7 +141,7 @@ class Box(object):
         
         """
         new_dims = np.add(self.shape, vector)
-        self = self.__init__(self.image, self.box_tl, new_dims)
+        self = self.__init__(self.image, self.box_tl, new_dims, self._min_size)
 
     def overlay_box(self, image):
         """
@@ -139,22 +153,18 @@ class Box(object):
         Returns:
             img_with_overlay: The image with the overlaid box.
         Raises:
-        
+       
         """
         # check if image is colour or greyscale
         if len(image.shape) == 2:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-
-        # should replace this with an accessor for each of
-        # the box's 4 corners
-        box_br = np.add(self._box_tl, self._dims)
 
         # define tuples for cv2.rectangle
         colour = (255, 0, 0)
         # cv2.rectangle requires corner co-ordinates to be in (x,y) not (i,j)
         # so indices are flipped.
         tl_tuple = tuple(np.flip(self._box_tl, 0))
-        br_tuple = tuple(np.flip(box_br, 0))
+        br_tuple = tuple(np.flip(self.box_br, 0))
 
         img_with_overlay = cv2.rectangle(image, tl_tuple, br_tuple, colour, 3)
         return img_with_overlay
@@ -202,7 +212,8 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
             try:
                 # translate the box
                 new_box.translate(step_size * vector[0])
-            except ValueError:
+            except ValueError as err:
+                print(err)
                 print("Box drawn out of bounds. Translation vector: ", vector)
                 # skip invalid boxes
                 continue
@@ -210,7 +221,8 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
             # catch boxes drawn with non-positive shape
             try:
                 new_box.resize(step_size * vector[1])
-            except ValueError:
+            except ValueError as err:
+                print(err)
                 print("Dims out of bounds. Transformation vector: ", vector)
                 # skip invalid boxes
                 continue
@@ -235,26 +247,22 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
     return current_box
 
 
+
+import directions_factory
 if __name__ == "__main__":
     """
     For testing only.
     """
     # load image
     image = cv2.imread("../mphys-testing/salience-in-photographs/images/birds_salience_map.jpg", 0)
-    starting_box = Box(image, np.array([200, 55]), np.array([100, 10]), np.array([25, 25]))
-    directions_list = np.array(
-        [
-            [[1, 0], [0, 0]],
-            [[0, 1], [0, 0]],
-            [[-1, 0], [0, 0]],
-            [[0, -1], [0, 0]],
-            [[0, 0], [1, 0]],
-            [[0, 0], [0, 1]],
-            [[0, 0], [-1, 0]],
-            [[0, 0], [0, -1]]
-        ])
-    
-    lowest_cost_box = minimise_cost(starting_box, 10, 0, directions_list)
+    y = image.shape[0]
+    x = image.shape[1]
+    starting_box = Box(image, np.array([y-100, x-100]), np.array([100, 100]), np.array([60, 60]))
+    print(starting_box.box_br)
+    directions_list = directions_factory.bottom_anchored()
+
+    lowest_cost_box = minimise_cost(starting_box, 10, 70, directions_list)
 
     cv2.imshow("box", lowest_cost_box.overlay_box(lowest_cost_box.image))
-    cv2.waitKey()
+    print(lowest_cost_box.shape)
+    cv2.waitKey(0)

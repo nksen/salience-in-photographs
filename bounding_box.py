@@ -32,7 +32,7 @@ class Box(object):
                  box. This is updated if the box is translated or
                  resized.    
     """
-    def __init__(self, image, box_tl, dims):
+    def __init__(self, image, box_tl, dims, minimum_size=np.array([0, 0])):
         """
         Box object initialiser
         Args:
@@ -53,6 +53,12 @@ class Box(object):
             raise ValueError("Anchor point must be non-negative.")
         if any(element < 0 for element in dims):
             raise ValueError("Dimensions must be non-negative.")
+
+        # check that dimensions are large than minimum_size
+        if dims[0] < minimum_size[0]:
+            raise ValueError("i'th dimension is less than minimum size.")
+        if dims[1] < minimum_size[1]:
+            raise ValueError("j'th dimension is less than minimum size.")
         
         # assign vars
         self._box_tl = box_tl
@@ -235,7 +241,7 @@ if __name__ == "__main__":
     """
     # load image
     image = cv2.imread("../mphys-testing/salience-in-photographs/images/birds_salience_map.jpg", 0)
-    starting_box = Box(image, np.array([200, 55]), np.array([100, 100]))
+    starting_box = Box(image, np.array([200, 55]), np.array([100, 10]), np.array([25, 25]))
     directions_list = np.array(
         [
             [[1, 0], [0, 0]],

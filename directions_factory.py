@@ -3,31 +3,77 @@
 --Toby Ticehurst--
 Oct 18
 
-factory.py
+directions_factory.py
 
-Class to generate boxes of a standard type.
-Also generates directions lists.
+Module to generate directions vectors.
 """
 
-from bounding_box import *
 import numpy as np
 
 
-class BoxFactory(object):
-    """
-    Factory for building specific boxes
-    """
-    def __init__(self, image):
-        # check image is valid
-        if np.any(image.shape) is 0:
-            raise ValueError("image dims must be non-zero")
-        self._image = image
+def unconstrained():
+    directions = np.array(
+        [
+            [[1, 0], [0, 0]],
+            [[0, 1], [0, 0]],
+            [[-1, 0], [0, 0]],
+            [[0, -1], [0, 0]],
+            [[0, 0], [1, 0]],
+            [[0, 0], [0, 1]],
+            [[0, 0], [-1, 0]],
+            [[0, 0], [0, -1]]
+        ])
+    return directions
 
-    # ~~ Properties ~~ #
 
-    # ~~ Methods ~~ #
-    def unconstrained(self, box_tl, dims):
-        """
-        Generates an unconstrained box 
-        """
-        
+def left_anchored():
+    directions = np.array(
+        [
+            [[1, 0], [0, 0]],
+            [[-1, 0], [0, 0]],
+            [[0, 0], [1, 0]],
+            [[0, 0], [0, 1]],
+            [[0, 0], [-1, 0]],
+            [[0, 0], [0, -1]]
+        ])
+    return directions
+
+
+def right_anchored():
+    directions = np.array(
+        [
+            [[1, 0], [0, 0]],
+            [[-1, 0], [0, 0]],
+            [[0, 0], [1, 0]],
+            [[0, -1], [0, 1]],
+            [[0, 0], [-1, 0]],
+            [[0, 1], [0, -1]]
+        ])
+    return directions
+
+
+def top_anchored():
+    directions = np.array(
+        [
+            [[0, 1], [0, 0]],
+            [[0, -1], [0, 0]],
+            [[0, 0], [1, 0]],
+            [[0, 0], [0, 1]],
+            [[0, 0], [-1, 0]],
+            [[0, 0], [0, -1]]
+        ])
+    return directions
+
+
+def bottom_anchored():
+    directions = np.array(
+        [
+            [[0, 1], [0, 0]],
+            [[0, -1], [0, 0]],
+            [[-1, 0], [1, 0]],
+            [[0, 0], [0, 1]],
+            [[1, 0], [-1, 0]],
+            [[0, 0], [0, -1]]
+        ])
+    return directions
+

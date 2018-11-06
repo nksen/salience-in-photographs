@@ -23,7 +23,11 @@ class BoxFactory(object):
             raise ValueError("image dims must be non-zero")
         self._image = image
 
-    # ~~ Properties -- #
+    # ~~ Properties ~~ #
 
-
-    
+    # ~~ Methods ~~ #
+    def unconstrained(self, box_tl, dims):
+        """
+        Generates an unconstrained box 
+        """
+        

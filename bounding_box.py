@@ -11,7 +11,7 @@ Box class and accompanying functions.
 import cv2
 import numpy as np
 import operator
-
+import utilities
 
 class Box(object):
     """
@@ -79,8 +79,11 @@ class Box(object):
         mask_i = np.arange(box_tl[0], box_br[0], 1).tolist()
         mask_j = np.arange(box_tl[1], box_br[1], 1).tolist()
         ixgrid = np.ix_(mask_i, mask_j)
-        # _data should never really be changed
+        # assign data
         self._data = image[ixgrid]
+
+        # declare metadata Bunch type
+        self._metadata = utilities.Bunch(history=np.array([]))
 
     # ~~ Properties ~~ #
     @property
@@ -111,8 +114,17 @@ class Box(object):
         """
         return np.sum(self._data)/(self.shape[0] * self.shape[1])
 
+    @property
+    def metadata(self):
+        """
+        Returns metadata Bunch
+        Bunch has the following items:
+    
+        """
+        return self._metadata
+
     # ~~ Methods ~~ #
-    def translate(self, vector):
+    def _translate(self, vector):
         """
         Translates the box by the specified vector.
 
@@ -128,7 +140,7 @@ class Box(object):
         # construct a new box object
         self = self.__init__(self.image, new_anchor, self.shape, self._min_size)
 
-    def resize(self, vector):
+    def _resize(self, vector):
         """
         Resizes the box by the specified amount in each direction.
 
@@ -143,6 +155,25 @@ class Box(object):
         new_dims = np.add(self.shape, vector)
         self = self.__init__(self.image, self.box_tl, new_dims, self._min_size)
 
+    def transform(self, vector):
+        """
+        Transforms the box according to the specified vector by
+        calling the translate and resize methods
+
+        Args:
+            vector: Compound vector of shape 2x2. The first element is the
+                    translation vector, and the second is the resize
+                    vector.
+        Returns:
+            N/A: modifies self by calling resize and translate (consider returning
+                 success flag if necessary?
+        Raises:
+        """
+        self._translate(vector[0])
+        self._resize(vector[1])
+        # record box history (assumes that the translate and resize functions do not
+        # contribute.
+        self._metadata.history.append(vector)
     def overlay_box(self, image):
         """
         Overlays a blue box on the image provided (note, not on own
@@ -188,12 +219,12 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
                          2 2D vectors. First vector must be for translation,
                          second vector for resizing.
     Returns:
-        current_box: This is the best box position according to the algorithm.
+        optimum_box: This is the best box position according to the algorithm.
     Raises:
         
     """
     
-    current_box = starting_box
+    optimum_box = starting_box
     # loop over n iterations. Each iteration consists of constructing
     # boxes by moving the current box according to each direction in
     # direction list. The costs and corresponding direction is recorded
@@ -202,16 +233,16 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
         # create empty candidates list. Stores a list of dictionaries
         candidate_vectors = [np.array([[0, 0], [0, 0]])]
         # simple list of costs so we can easily find the minimum
-        candidate_costs = [current_box.cost]
+        candidate_costs = [optimum_box.cost]
         # loop over all translations/transformations
         for vector in directions_list:
             print("-------------new direction------------")
-            # create new box and move according to vector
-            new_box = copy.copy(current_box)
+            # create new candidate box and move according to vector
+            candidate_box = copy.copy(optimum_box)
             # try-except block to catch boxes drawn out of bounds
             try:
                 # translate the box
-                new_box.translate(step_size * vector[0])
+                candidate_box._translate(step_size * vector[0])
             except ValueError as err:
                 print(err)
                 print("Box drawn out of bounds. Translation vector: ", vector)
@@ -220,7 +251,7 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
 
             # catch boxes drawn with non-positive shape
             try:
-                new_box.resize(step_size * vector[1])
+                candidate_box._resize(step_size * vector[1])
             except ValueError as err:
                 print(err)
                 print("Dims out of bounds. Transformation vector: ", vector)
@@ -228,9 +259,9 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
                 continue
             
             # check that box is valid
-            # print(new_box.data)
+            # print(candidate_box.data)
             candidate_vectors.append(vector)
-            candidate_costs.append(new_box.cost)
+            candidate_costs.append(candidate_box.cost)
             
 
         # now we need to select the best candidate
@@ -240,11 +271,11 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
         print(best_vector)
         print(best_cost)
 
-        # apply best transformation vector to current_box
-        current_box.translate(step_size * best_vector[0])
-        current_box.resize(step_size * best_vector[1])
+        # apply best transformation vector to optimum_box
+        optimum_box._translate(step_size * best_vector[0])
+        optimum_box._resize(step_size * best_vector[1])
 
-    return current_box
+    return optimum_box
 
 
 

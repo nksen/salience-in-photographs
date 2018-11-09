@@ -8,9 +8,12 @@ bounding_box.py
 Box class and accompanying functions.
 """
 
+# std imports
+import os
 import cv2
+import binascii
 import numpy as np
-import operator
+# module imports
 import utilities
 
 
@@ -84,7 +87,10 @@ class Box(object):
         self._data = image[ixgrid]
 
         # declare metadata Bunch type and initialise values
-        self._metadata = utilities.Bunch(history=[])
+        self._metadata = utilities.Bunch(
+            box_id = binascii.b2a_hex(os.urandom(15)),
+            history=[]
+        )
 
     # ~~ Properties ~~ #
     @property
@@ -237,12 +243,11 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
         best_cost = min(candidate_costs)
         best_vector = candidate_vectors[candidate_costs.index(best_cost)]
 
-        print(best_vector)
-        print(best_cost)
-
         # apply best transformation vector to optimum_box
         optimum_box.transform(step_size * best_vector, record_transformation=True)
-
+        print("Box ID: ", optimum_box.metadata.box_id)
+        print(best_vector)
+        print(best_cost)
     return optimum_box
 
 

@@ -13,6 +13,7 @@ import numpy as np
 import operator
 import utilities
 
+
 class Box(object):
     """
     The box is a submatrix of the image, with an anchor point
@@ -82,8 +83,8 @@ class Box(object):
         # assign data
         self._data = image[ixgrid]
 
-        # declare metadata Bunch type
-        self._metadata = utilities.Bunch(history=np.array([]))
+        # declare metadata Bunch type and initialise values
+        self._metadata = utilities.Bunch(history=[])
 
     # ~~ Properties ~~ #
     @property
@@ -124,38 +125,7 @@ class Box(object):
         return self._metadata
 
     # ~~ Methods ~~ #
-    def _translate(self, vector):
-        """
-        Translates the box by the specified vector.
-
-        Args:
-            vector: Translation vector in (i,j).
-        Returns:
-            N/A: modifies self by calling __init__.
-        Raises:
-        
-        """
-        # new anchor point
-        new_anchor = np.add(self.box_tl, vector)
-        # construct a new box object
-        self = self.__init__(self.image, new_anchor, self.shape, self._min_size)
-
-    def _resize(self, vector):
-        """
-        Resizes the box by the specified amount in each direction.
-
-        Args:
-            vector: Specifies the change in side length for each
-                    dimension. Must be give in (i,j).
-        Returns:
-            N/A: modifies self by calling __init__.
-        Raises:
-        
-        """
-        new_dims = np.add(self.shape, vector)
-        self = self.__init__(self.image, self.box_tl, new_dims, self._min_size)
-
-    def transform(self, vector):
+    def transform(self, vector, record_transformation=False):
         """
         Transforms the box according to the specified vector by
         calling the translate and resize methods
@@ -164,16 +134,27 @@ class Box(object):
             vector: Compound vector of shape 2x2. The first element is the
                     translation vector, and the second is the resize
                     vector.
+            record_transformation: Bool to allow addition of provided vector to
+                                   the metadata.history
         Returns:
             N/A: modifies self by calling resize and translate (consider returning
                  success flag if necessary?
         Raises:
         """
-        self._translate(vector[0])
-        self._resize(vector[1])
-        # record box history (assumes that the translate and resize functions do not
-        # contribute.
-        self._metadata.history.append(vector)
+        # cache metadata
+        metadata = self._metadata
+        # translate box
+        new_anchor = np.add(self._box_tl, vector[0])
+        self.__init__(self.image, new_anchor, self.shape, self._min_size)
+        # resize box
+        new_dims = np.add(self._dims, vector[1])
+        self.__init__(self.image, self.box_tl, new_dims, self._min_size)
+        # reassign metadata
+        self._metadata = metadata
+        # update metadata history if required
+        if record_transformation:
+            self._metadata.history.append(vector)
+
     def overlay_box(self, image):
         """
         Overlays a blue box on the image provided (note, not on own
@@ -244,7 +225,6 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
                 candidate_box.transform(step_size * vector)
             except ValueError as err:
                 print(err)
-                print("Dims out of bounds. Transformation vector: ", vector)
                 # skip invalid boxes
                 continue
             
@@ -252,7 +232,6 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
             # print(candidate_box.data)
             candidate_vectors.append(vector)
             candidate_costs.append(candidate_box.cost)
-            
 
         # now we need to select the best candidate
         best_cost = min(candidate_costs)
@@ -262,11 +241,9 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
         print(best_cost)
 
         # apply best transformation vector to optimum_box
-        optimum_box._translate(step_size * best_vector[0])
-        optimum_box._resize(step_size * best_vector[1])
+        optimum_box.transform(step_size * best_vector, record_transformation=True)
 
     return optimum_box
-
 
 
 import directions_factory
@@ -278,12 +255,12 @@ if __name__ == "__main__":
     image = cv2.imread("../mphys-testing/salience-in-photographs/images/birds_salience_map.jpg", 0)
     y = image.shape[0]
     x = image.shape[1]
-    starting_box = Box(image, np.array([y-100, x-100]), np.array([100, 100]), np.array([60, 60]))
+    starting_box = Box(image, np.array([0, 0]), np.array([100, 100]), np.array([60, 60]))
     print(starting_box.box_br)
-    directions_list = directions_factory.bottom_anchored()
+    directions_list = directions_factory.unconstrained()
 
-    lowest_cost_box = minimise_cost(starting_box, 10, 70, directions_list)
+    lowest_cost_box = minimise_cost(starting_box, 20, 70, directions_list)
 
     cv2.imshow("box", lowest_cost_box.overlay_box(lowest_cost_box.image))
-    print(lowest_cost_box.shape)
+    print(lowest_cost_box._metadata.history)
     cv2.waitKey(0)

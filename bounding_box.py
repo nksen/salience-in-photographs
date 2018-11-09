@@ -241,17 +241,7 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
             candidate_box = copy.copy(optimum_box)
             # try-except block to catch boxes drawn out of bounds
             try:
-                # translate the box
-                candidate_box._translate(step_size * vector[0])
-            except ValueError as err:
-                print(err)
-                print("Box drawn out of bounds. Translation vector: ", vector)
-                # skip invalid boxes
-                continue
-
-            # catch boxes drawn with non-positive shape
-            try:
-                candidate_box._resize(step_size * vector[1])
+                candidate_box.transform(step_size * vector)
             except ValueError as err:
                 print(err)
                 print("Dims out of bounds. Transformation vector: ", vector)

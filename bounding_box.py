@@ -121,7 +121,7 @@ class Box(object):
         Calculates the cost bounded by the box.
         Changing to a more detailed calculation.
         """
-        return np.sum(self._data)/(self.shape[0] * self.shape[1])
+        return np.sum(self._data)/(self.shape[0] * self.shape[1]) ** 2
 
     @property
     def metadata(self):

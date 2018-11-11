@@ -33,7 +33,8 @@ def generate_saliency_map(image, threshold_floor=None, to_display=False):
     # check if rescaling is wanted
     if to_display:
         saliency_map = (saliency_map * 255).astype("uint8")
-        threshold_floor = threshold_floor * 255
+        if threshold_floor is not None:
+            threshold_floor = threshold_floor * 255
         threshold_ceiling = 255
     else:
         threshold_ceiling = 1

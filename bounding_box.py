@@ -36,12 +36,12 @@ class Box(object):
                  box. This is updated if the box is translated or
                  resized.    
     """
-    def __init__(self, image, box_tl, dims, minimum_size=np.array([0, 0])):
+    def __init__(self, s_map, box_tl, dims, minimum_size=np.array([0, 0])):
         """
         Box object initialiser
         Args:
-            image: np.array grayscale saliency map which the box is
-                   to be drawn over.
+            s_map: np.array grayscale saliency map which the box is
+                          to be drawn over.
             box_tl: Co-ords for the bottom right corner of the box,
                     computed from box_tl & dims
             dims: Dimensions of the box in (i,j). Presented as shape
@@ -69,22 +69,22 @@ class Box(object):
         # assign vars
         self._box_tl = box_tl
         self._dims = dims
-        self._img = image
+        self._s_map = s_map
         self._min_size = minimum_size
         # compute and check box_br
         box_br = np.add(box_tl, dims)
-        if box_br[0] > image.shape[0] or box_br[1] > image.shape[1]:
+        if box_br[0] > s_map.shape[0] or box_br[1] > s_map.shape[1]:
             raise ValueError("Box drawn out of range.")
         else:
             self._box_br = box_br
         
-        # grab data inside box from image
+        # grab data inside box from s_map
         # create numpy mask
         mask_i = np.arange(box_tl[0], box_br[0], 1).tolist()
         mask_j = np.arange(box_tl[1], box_br[1], 1).tolist()
         ixgrid = np.ix_(mask_i, mask_j)
         # assign data
-        self._data = image[ixgrid]
+        self._data = s_map[ixgrid]
 
         # declare metadata Bunch type and initialise values
         self._metadata = utilities.Bunch(
@@ -112,8 +112,8 @@ class Box(object):
         return self._data
 
     @property
-    def image(self):
-        return self._img
+    def s_map(self):
+        return self._s_map
 
     @property
     def cost(self):
@@ -153,10 +153,10 @@ class Box(object):
         metadata = self._metadata
         # translate box
         new_anchor = np.add(self._box_tl, vector[0])
-        self.__init__(self.image, new_anchor, self.shape, self._min_size)
+        self.__init__(self.s_map, new_anchor, self.shape, self._min_size)
         # resize box
         new_dims = np.add(self._dims, vector[1])
-        self.__init__(self.image, self.box_tl, new_dims, self._min_size)
+        self.__init__(self.s_map, self.box_tl, new_dims, self._min_size)
         # reassign metadata
         self._metadata = metadata
         # update metadata history if required
@@ -200,7 +200,7 @@ class Box(object):
         """
         # set up save path and temporary box object
         save_path = save_path + "/" + str(self._metadata.box_id) + ".avi"
-        temp_box = Box(self.image, self._metadata.starting_box_tl, self._metadata.starting_dims, self._min_size)
+        temp_box = Box(self.s_map, self._metadata.starting_box_tl, self._metadata.starting_dims, self._min_size)
         print("Saving video to : ", save_path)
         # initialise writer
         cv2.VideoWriter_fourcc(*'X264')
@@ -220,7 +220,7 @@ import sys
 def minimise_cost(starting_box, step_size, n_iterations, directions_list):
     """
     Minimises the cost defined by the box class by exploring
-    the image space stored in the box.
+    the saliency map space stored in the box.
 
     Args:
         starting_box: Box object located at the desired starting position of
@@ -250,7 +250,7 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
         candidate_costs = [optimum_box.cost]
         # loop over all translations/transformations
         for vector in directions_list:
-            print("-------------new direction------------")
+            #print("-------------new direction------------")
             # create new candidate box and move according to vector
             candidate_box = copy.copy(optimum_box)
             # try-except block to catch boxes drawn out of bounds
@@ -272,9 +272,10 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
 
         # apply best transformation vector to optimum_box
         optimum_box.transform(step_size * best_vector, record_transformation=True)
-        print("Box ID: ", optimum_box.metadata.box_id)
-        print(best_vector)
-        print(best_cost)
+        #print("Box ID: ", optimum_box.metadata.box_id)
+        #print(best_vector)
+        #print(best_cost)
+    # Put optimum box printout here!
     return optimum_box
 
 
@@ -287,7 +288,7 @@ if __name__ == "__main__":
     image = cv2.imread("../mphys-testing/salience-in-photographs/images/birds_salience_map.jpg", 0)
     y = image.shape[0]
     x = image.shape[1]
-    starting_box = Box(image, np.array([220, 300]), np.array([100, 100]), np.array([60, 60]))
+    starting_box = Box(image, np.array([220, 440]), np.array([100, 100]), np.array([60, 60]))
     print(starting_box.box_br)
     directions_list = directions_factory.unconstrained()
 
@@ -295,5 +296,5 @@ if __name__ == "__main__":
    # cv2.imshow("box", lowest_cost_box.overlay_box(lowest_cost_box.image))
    # print(lowest_cost_box._metadata.history)
 
-    lowest_cost_box.playback_history(image, '../mphys-testing/salience-in-photographs/images/output')
+    lowest_cost_box.playback_history(cv2.imread("../mphys-testing/salience-in-photographs/images/birds.jpg", 0), '../mphys-testing/salience-in-photographs/images/output')
     cv2.waitKey(0)

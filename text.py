@@ -10,7 +10,6 @@ Contains text class
 import cv2
 from pathlib import Path
 from pathlib import PurePath
-from PIL import ImageFont, ImageDraw
 import numpy as np
 
 import utilities
@@ -40,12 +39,13 @@ class Text(object):
         return self._raw_text
 
     # ~~ properties ~~ #
-    @property
-    def raw_text(self):
-        return self._raw_text
     
     # ~~ methods ~~ #
-    #def draw(self, img_path, )
+    def draw(self, img_path, box_shape):
+        """
+        Draws text on the image provided given a constraining box shape
+        """
+
 if __name__ == "__main__":
     raw = "This is a sentence that is going to be long This is a sentence that is going to be long This is a sentence that is going to be long This is a sentence that is going to be long."
     fontpath = PurePath("/usr/share/fonts/truetype/ubuntu/UbuntuMono-B.ttf")

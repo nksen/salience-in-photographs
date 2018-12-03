@@ -39,7 +39,7 @@ class ImageText(object):
             self.size = filename_or_size
             self.image = Image.new(mode, self.size, color=background)
             self.filename = None
-         else:
+        else:
             raise TypeError("ImageText __init__() : invalid filename_or_size type. %s" %\
                             type(filename_or_size)) 
         # open PIL image for drawing

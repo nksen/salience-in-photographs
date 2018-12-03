@@ -39,6 +39,9 @@ class ImageText(object):
             self.size = filename_or_size
             self.image = Image.new(mode, self.size, color=background)
             self.filename = None
+         else:
+            raise TypeError("ImageText __init__() : invalid filename_or_size type. %s" %\
+                            type(filename_or_size)) 
         # open PIL image for drawing
         self.draw = ImageDraw.Draw(self.image)
         self.encoding = encoding
@@ -106,6 +109,7 @@ class ImageText(object):
         """
         Passthrough function for PIL.ImageFont.getsize()
         """
+
         font = ImageFont.truetype(font_filename, font_size)
         return font.getsize(text)
 

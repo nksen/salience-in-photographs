@@ -257,7 +257,7 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
             try:
                 candidate_box.transform(step_size * vector)
             except ValueError as err:
-                print(err)
+                print(iteration,": ",err)
                 # skip invalid boxes
                 continue
             

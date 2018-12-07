@@ -17,7 +17,10 @@ class Bunch(object):
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
 
-
+"""
+The ImageText code below has been adapted for use in this project. Original source 
+links are included below.
+"""
 # Copyright 2011 Álvaro Justen [alvarojusten at gmail dot com]
 # https://gist.github.com/josephkern/69591e9bc1d2e07a46d35d2a3ab66542/4f7a1a1631e72e184af9ad4d33a79a612e01e605
 # https://gist.github.com/turicas/1455973
@@ -47,6 +50,9 @@ class ImageText(object):
         self.encoding = encoding
 
     def save(self, filename=None):
+        """
+        Passthrough function for PIL image.save
+        """
         self.image.save(filename or self.filename)
 
     def get_font_size(self, text, font, max_width=None, max_height=None):

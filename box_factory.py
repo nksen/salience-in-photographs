@@ -4,7 +4,10 @@
 
 box_factory.py
 
-for creating template starting boxes
+for creating template starting boxes (in bulk) by translating
+readable, image-agnostic requests into image-specific co-ordinates
+that are passed to the box constructor. Acts as an interface layer
+between the Box mechanics and the user-facing GUI/CLI.
 """
 
 

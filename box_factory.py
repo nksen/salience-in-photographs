@@ -10,6 +10,7 @@ that are passed to the box constructor. Acts as an interface layer
 between the Box mechanics and the user-facing GUI/CLI.
 """
 
+import numpy as np
 
 class BoxFactory(object):
     """

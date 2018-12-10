@@ -90,6 +90,7 @@ class Box(object):
         self._metadata = utilities.Bunch(
             box_id=binascii.b2a_hex(os.urandom(15)),
             history=[],
+            construction_request=None       # used to store raw request made by factory if box was created in a factory
             starting_box_tl=box_tl,
             starting_dims=dims
         )

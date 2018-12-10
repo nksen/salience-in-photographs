@@ -53,7 +53,7 @@ class BoxFactory(object):
             "ct",
             #"centre bottom",
             "cb"      
-                ] 
+            ] 
     def translate_request(self, request_readable):
         """
         Translates a single request
@@ -140,12 +140,12 @@ class BoxFactory(object):
         boxes_list = []
 
         # loop over requests and generate boxes
-        for request in self._requests_list:
+        for index, request in enumerate(self._requests_list):
             box_tl = request[0]
             box_dims = request[1]
             box = bounding_box.Box(self._s_map, box_tl, box_dims, self._min_size)
             # add request metadata
-            box.metadata.construction_request = request
+            box.metadata.construction_request = requests_readable[index]
             boxes_list.append(box)
         return boxes_list
         

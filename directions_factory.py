@@ -86,7 +86,7 @@ def topleft_anchored():
             [[0, 0], [-1, 0]],
             [[0, 0], [0, -1]]
         ])
-        return directions
+    return directions
 
 
 def topright_anchored():
@@ -108,6 +108,7 @@ def bottomleft_anchored():
             [[1, 0], [-1, 0]],
             [[0, 0], [0, -1]]
         ])
+    return directions
 
 
 def bottomright_anchored():
@@ -118,3 +119,4 @@ def bottomright_anchored():
             [[1, 0], [-1, 0]],
             [[0, 1], [0, -1]]
         ])
+    return directions

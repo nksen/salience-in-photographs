@@ -144,6 +144,8 @@ class BoxFactory(object):
             box_tl = request[0]
             box_dims = request[1]
             box = bounding_box.Box(self._s_map, box_tl, box_dims, self._min_size)
+            # add request metadata
+            box.metadata.construction_request = request
             boxes_list.append(box)
         return boxes_list
         

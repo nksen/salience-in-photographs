@@ -11,6 +11,7 @@ Box class and accompanying functions.
 # std imports
 import os
 import cv2
+import copy
 import binascii
 import numpy as np
 # module imports
@@ -187,7 +188,8 @@ class Box(object):
         tl_tuple = tuple(np.flip(self._box_tl, 0))
         br_tuple = tuple(np.flip(self.box_br, 0))
 
-        img_with_overlay = cv2.rectangle(image, tl_tuple, br_tuple, colour, 3)
+        img_with_overlay = copy.copy(image)
+        cv2.rectangle(img_with_overlay, tl_tuple, br_tuple, colour, 3)
         return img_with_overlay
 
     def playback_history(self, image, save_path):

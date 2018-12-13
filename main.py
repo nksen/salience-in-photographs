@@ -90,6 +90,8 @@ if __name__ == "__main__":
         df.top_anchored(),
         df.bottom_anchored()
     ]
+
+    box_factory.minimise_boxes(box_list, directions)
     
 
 """

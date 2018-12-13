@@ -226,7 +226,7 @@ class Box(object):
 
 import copy
 import sys
-def minimise_cost(starting_box, directions_list, step_size, n_iterations=100):
+def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=200):
     """
     Minimises the cost defined by the box class by exploring
     the saliency map space stored in the box.

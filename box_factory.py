@@ -11,8 +11,11 @@ between the Box mechanics and the user-facing GUI/CLI.
 """
 
 # std imports
+import os
 import cv2
 import numpy as np
+from multiprocessing import Pool
+from multiprocessing import cpu_count
 # module imports
 import bounding_box
 
@@ -148,8 +151,52 @@ class BoxFactory(object):
             box.metadata.construction_request = requests_readable[index]
             boxes_list.append(box)
         return boxes_list
-        
 
+def minimise_boxes(boxes_list, directions_lists, step_size=10, n_iterations=200):
+    """
+    Utilises multiprocessing.Pool to minimise multiple boxes simultaneously. 
+    num workers is cpu_count - 1 to prevent complete CPU lockup.
+    """
+    # check if step size is a list or int
+    # if int, make into list of ints so it can be passed to starmap   
+    if isinstance(step_size, int):
+        step_size = [step_size]*len(boxes_list)
+    elif not isinstance(step_size, list):
+        raise ValueError("minimise_boxes: step size should be int or list with length == len(boxes_list)")
+
+    # same check with n_iterations
+    if isinstance(n_iterations, int):
+        n_iterations = [n_iterations]*len(boxes_list)
+    elif not isinstance(n_iterations, list):
+        raise ValueError("minimise_boxes: n iterations should be int or list with length == len(boxes_list)")
+
+    # make ndarray of list sizes and check that they're the same
+    lengths = np.array([
+        len(boxes_list),
+        len(directions_lists),
+        len(step_size),
+        len(n_iterations)
+    ])
+
+    if not np.all(lengths == lengths[0]):
+        print(lengths)
+        raise ValueError("minimise_boxes: argument arrays must have equal lengths.")
+
+    # repack boxes_list directions_lists step_size and n_iterations into an iterable
+    # such that: [(1,2), (3,4)] -> [func(1,2), func(3,4)]
+    args_iterable = []
+    for index in range(len(boxes_list)):
+        arguments = (boxes_list[index], directions_lists[index], step_size[index], n_iterations[index])
+        args_iterable.append(arguments)
+    # get process number
+    num_workers = cpu_count() - 1
+    
+
+
+    # open pool
+    
+
+    
 if __name__ == "__main__":
     image = cv2.imread("../mphys-testing/images/footballer.jpg", 0)
     requests = [["br", 0.2],

@@ -265,8 +265,7 @@ def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=200)
             # try-except block to catch boxes drawn out of bounds
             try:
                 candidate_box.transform(step_size * vector)
-            except ValueError as err:
-                print(err)
+            except ValueError:
                 # skip invalid boxes
                 continue
             

@@ -14,6 +14,7 @@ import cv2
 import copy
 import binascii
 import numpy as np
+from pathlib import Path
 # module imports
 import utilities
 
@@ -221,6 +222,16 @@ class Box(object):
             writer.write(temp_box.overlay_box(image))
         
         writer.release()
+
+    def write_to_file(self, folderpath, imagepath):
+        """
+        Writes box + video + metadata to folderpath
+        """
+        # get image name from imagepath Path (remove file extension)
+        image_name = imagepath.stem
+        # write box image
+        outimg = self.overlay_box(image)
+
 
 # ========================= /class ========================
 

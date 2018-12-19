@@ -11,6 +11,7 @@ Box class and accompanying functions.
 # std imports
 import os
 import cv2
+import copy
 import binascii
 import numpy as np
 # module imports
@@ -90,7 +91,7 @@ class Box(object):
         self._metadata = utilities.Bunch(
             box_id=binascii.b2a_hex(os.urandom(15)),
             history=[],
-            construction_request=None       # used to store raw request made by factory if box was created in a factory
+            construction_request=None,       # used to store raw request made by factory if box was created in a factory
             starting_box_tl=box_tl,
             starting_dims=dims
         )
@@ -187,7 +188,8 @@ class Box(object):
         tl_tuple = tuple(np.flip(self._box_tl, 0))
         br_tuple = tuple(np.flip(self.box_br, 0))
 
-        img_with_overlay = cv2.rectangle(image, tl_tuple, br_tuple, colour, 3)
+        img_with_overlay = copy.copy(image)
+        cv2.rectangle(img_with_overlay, tl_tuple, br_tuple, colour, 3)
         return img_with_overlay
 
     def playback_history(self, image, save_path):
@@ -206,19 +208,25 @@ class Box(object):
         # initialise writer
         cv2.VideoWriter_fourcc(*'X264')
         writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'X264'), 1., (image.shape[1], image.shape[0]))
+        
         # add starting position image
-        writer.write(temp_box.overlay_box(image))
-
+        for _ in range(3):
+            writer.write(temp_box.overlay_box(image))
         # loop over history to generate images
         for vector in self._metadata.history:
             temp_box.transform(vector)
             writer.write(temp_box.overlay_box(image))
+        # write end image for padding
+        for _ in range(3):
+            writer.write(temp_box.overlay_box(image))
+        
         writer.release()
 
 # ========================= /class ========================
+
 import copy
 import sys
-def minimise_cost(starting_box, step_size, n_iterations, directions_list):
+def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=200):
     """
     Minimises the cost defined by the box class by exploring
     the saliency map space stored in the box.
@@ -257,8 +265,7 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
             # try-except block to catch boxes drawn out of bounds
             try:
                 candidate_box.transform(step_size * vector)
-            except ValueError as err:
-                print(err)
+            except ValueError:
                 # skip invalid boxes
                 continue
             
@@ -268,15 +275,21 @@ def minimise_cost(starting_box, step_size, n_iterations, directions_list):
             candidate_costs.append(candidate_box.cost)
 
         # now we need to select the best candidate
+        
         best_cost = min(candidate_costs)
         best_vector = candidate_vectors[candidate_costs.index(best_cost)]
+
+        # check if best_vector is "no step made"
+        if np.all(best_vector==0):
+            print("Minimum found after", iteration, "iterations")
+            break
 
         # apply best transformation vector to optimum_box
         optimum_box.transform(step_size * best_vector, record_transformation=True)
         #print("Box ID: ", optimum_box.metadata.box_id)
         #print(best_vector)
         #print(best_cost)
-    # Put optimum box printout here!
+    # Put optimum box printout here if necessary
     return optimum_box
 
 
@@ -286,16 +299,16 @@ if __name__ == "__main__":
     For testing only.
     """
     # load image
-    image = cv2.imread("../mphys-testing/salience-in-photographs/images/birds_salience_map.jpg", 0)
+    image = cv2.imread("../mphys-testing/images/birds_salience_map.jpg", 0)
     y = image.shape[0]
     x = image.shape[1]
     starting_box = Box(image, np.array([220, 440]), np.array([100, 100]), np.array([60, 60]))
     print(starting_box.box_br)
     directions_list = directions_factory.unconstrained()
 
-    lowest_cost_box = minimise_cost(starting_box, 50, 70, directions_list)
-   # cv2.imshow("box", lowest_cost_box.overlay_box(lowest_cost_box.image))
+    lowest_cost_box = minimise_cost(starting_box, directions_list, 50, 70)
+    cv2.imshow("box", lowest_cost_box.overlay_box(image))
    # print(lowest_cost_box._metadata.history)
 
-    lowest_cost_box.playback_history(cv2.imread("../mphys-testing/salience-in-photographs/images/birds.jpg", 0), '../mphys-testing/salience-in-photographs/images/output')
+    lowest_cost_box.playback_history(cv2.imread("../mphys-testing/images/birds.jpg", 0), '../mphys-testing/salience-in-photographs/images/output')
     cv2.waitKey(0)

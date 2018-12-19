@@ -91,9 +91,13 @@ if __name__ == "__main__":
         df.bottom_anchored()
     ]
 
-    box_factory.minimise_boxes(box_list, directions)
+    box_list = box_factory.minimise_boxes(box_list, directions)
     
-
+    for box in box_list:
+        img = box.overlay_box(raw_img)
+        cv2.imshow(box.metadata.construction_request[0], img)
+        cv2.waitKey(0)
+    
 """
     
     # minimise salience

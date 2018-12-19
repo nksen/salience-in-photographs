@@ -184,25 +184,24 @@ def minimise_boxes(boxes_list, directions_lists, step_size=10, n_iterations=200)
 
     # repack boxes_list directions_lists step_size and n_iterations into an iterable
     # such that: [(1,2), (3,4)] -> [func(1,2), func(3,4)]
-    #args_iterable = zip(boxes_list, directions_lists, step_size, n_iterations)
-    
+    args_iterable = zip(boxes_list, directions_lists, step_size, n_iterations)
+    """
     args_iterable = []
     for index in range(len(boxes_list)):
         arguments = (boxes_list[index], directions_lists[index], step_size[index], n_iterations[index])
         args_iterable.append(arguments)
-    
+    """
     # get process number and open pool
     num_workers = cpu_count() - 1
+    print("Opening pool")
     with Pool(processes=num_workers) as pool:
-        pool.starmap(bounding_box.minimise_cost, args_iterable)
+        optimum_boxes = pool.starmap(bounding_box.minimise_cost, args_iterable)
         pool.close()
-        print("Pool closed.")
+        print("Pool closed")
         pool.join()
 
+    return optimum_boxes
 
-    
-
-    
 if __name__ == "__main__":
     image = cv2.imread("../mphys-testing/images/footballer.jpg", 0)
     requests = [["br", 0.2],

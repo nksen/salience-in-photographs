@@ -234,8 +234,9 @@ class Box(object):
         """
         # get image name from imagepath Path (remove file extension)
         image_name = imagepath.stem
-        # build the 3 file names
+        # build the file names
         outimg_path = folderpath / Path("boxed_" + str(image_name) + str(imagepath.suffix))
+        outsmap_path = folderpath / Path("boxed_smap_" + str(image_name) + str(imagepath.suffix))
         outvid_path = folderpath / Path("history_" + str(image_name) + video_ext)
         metafile_path = folderpath / Path("metadata_" + str(image_name) + ".txt")
 
@@ -244,6 +245,9 @@ class Box(object):
         # write box image
         outimg = self.overlay_box(image)
         cv2.imwrite(str(outimg_path), outimg)
+        # write box on smap
+        outsmap = self.overlay_box(self._s_map)
+        cv2.imwrite(str(outsmap_path), outsmap)
 
         # write video
         self.playback_history(image, str(outvid_path))

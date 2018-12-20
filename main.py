@@ -53,7 +53,7 @@ if __name__ == "__main__":
     else:
         raise ValueError("Invalid image file path.")
     # process image
-    s_map = preprocessing.generate_saliency_map(raw_img, to_display=False)
+    s_map = preprocessing.generate_saliency_map(raw_img, to_display=True)
     
     # ==== generate boxes and directions ==== #
     factory = box_factory.BoxFactory(s_map, text=None)

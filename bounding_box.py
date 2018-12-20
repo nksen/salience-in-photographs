@@ -203,7 +203,12 @@ class Box(object):
         Raises:
         """
         # set up save path and temporary box object
-        save_path = save_path + "/" + str(self._metadata.box_id) + ".avi"
+
+
+        ### This should be uncommented if the file should be named as box_id
+        # ##save_path = save_path + "/" + str(self._metadata.box_id) + ".avi"
+
+        
         temp_box = Box(self.s_map, self._metadata.starting_box_tl, self._metadata.starting_dims, self._min_size)
         print("Saving video to : ", save_path)
         # initialise writer
@@ -234,9 +239,14 @@ class Box(object):
         outvid_path = folderpath / Path("history_" + str(image_name) + video_ext)
         metafile_path = folderpath / Path("metadata_" + str(image_name) + ".txt")
 
+        # load image
+        image = cv2.imread(str(imagepath))
         # write box image
         outimg = self.overlay_box(image)
         cv2.imwrite(str(outimg_path), outimg)
+
+        # write video
+        self.playback_history(image, str(outvid_path))
 
         
 

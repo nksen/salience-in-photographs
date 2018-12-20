@@ -14,6 +14,7 @@ import cv2
 import copy
 import binascii
 import numpy as np
+from pathlib import Path
 # module imports
 import utilities
 
@@ -202,7 +203,12 @@ class Box(object):
         Raises:
         """
         # set up save path and temporary box object
-        save_path = save_path + "/" + str(self._metadata.box_id) + ".avi"
+
+
+        ### This should be uncommented if the file should be named as box_id
+        # ##save_path = save_path + "/" + str(self._metadata.box_id) + ".avi"
+
+
         temp_box = Box(self.s_map, self._metadata.starting_box_tl, self._metadata.starting_dims, self._min_size)
         print("Saving video to : ", save_path)
         # initialise writer
@@ -221,6 +227,37 @@ class Box(object):
             writer.write(temp_box.overlay_box(image))
         
         writer.release()
+
+    def write_to_file(self, folderpath, imagepath, video_ext=".avi"):
+        """
+        Writes box + video + metadata to folderpath
+        """
+        # get image name from imagepath Path (remove file extension)
+        image_name = imagepath.stem
+        # build the file names
+        outimg_path = folderpath / Path("boxed_" + str(image_name) + str(imagepath.suffix))
+        outsmap_path = folderpath / Path("boxed_smap_" + str(image_name) + str(imagepath.suffix))
+        outvid_path = folderpath / Path("history_" + str(image_name) + video_ext)
+        metafile_path = folderpath / Path("metadata_" + str(image_name) + ".txt")
+
+        # load image
+        image = cv2.imread(str(imagepath))
+        # write box image
+        outimg = self.overlay_box(image)
+        cv2.imwrite(str(outimg_path), outimg)
+        # write box on smap
+        outsmap = self.overlay_box(self._s_map)
+        cv2.imwrite(str(outsmap_path), outsmap)
+
+        # write video
+        self.playback_history(image, str(outvid_path))
+
+        # write metadata
+        writefile = open(metafile_path, "w+")
+        writefile.write(str(self.metadata.__dict__))
+        writefile.close()
+
+        
 
 # ========================= /class ========================
 
@@ -307,8 +344,11 @@ if __name__ == "__main__":
     directions_list = directions_factory.unconstrained()
 
     lowest_cost_box = minimise_cost(starting_box, directions_list, 50, 70)
-    cv2.imshow("box", lowest_cost_box.overlay_box(image))
+    
+    lowest_cost_box.write_to_file(Path("../mphys-testing/images/output/testingwrite/"), Path("../mphys-testing/images/birds.jpg"))
+   
+   # cv2.imshow("box", lowest_cost_box.overlay_box(image))
    # print(lowest_cost_box._metadata.history)
 
-    lowest_cost_box.playback_history(cv2.imread("../mphys-testing/images/birds.jpg", 0), '../mphys-testing/salience-in-photographs/images/output')
-    cv2.waitKey(0)
+   # lowest_cost_box.playback_history(cv2.imread("../mphys-testing/images/birds.jpg", 0), '../mphys-testing/salience-in-photographs/images/output')
+   # cv2.waitKey(0)

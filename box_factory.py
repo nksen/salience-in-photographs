@@ -16,6 +16,7 @@ import cv2
 import numpy as np
 from multiprocessing import Pool
 from multiprocessing import cpu_count
+from pathlib import Path
 # module imports
 import bounding_box
 
@@ -201,6 +202,37 @@ def minimise_boxes(boxes_list, directions_lists, step_size=10, n_iterations=200)
         pool.join()
 
     return optimum_boxes
+
+def write_boxes(boxes_list, folderpath, imagepath):
+    """
+    Saves a list of boxes to the folder specified by folderpath.
+    Directory structure is created:
+        $Image name$
+            $requestanchor$
+                --files stored here--
+    
+    """
+    # create top level directory
+    parent_path = folderpath / Path(imagepath.stem)
+    if parent_path.is_dir():
+        raise ValueError("write_boxes: directory ", str(parent_path), " exists")
+    parent_path.resolve().mkdir()
+
+    # loop over boxes
+    for box in boxes_list:
+        # create box path
+        if box.metadata.construction_request is None:
+            box_path = parent_path / Path(str(box.metadata.box_id))
+        else:
+            box_path = parent_path / Path(box.metadata.construction_request[0])
+        # make box directory
+        if box_path.is_dir():
+            raise ValueError("write_boxes: directory ", str(box_path), " exists")
+        box_path.mkdir()
+        # write box data to file
+        box.write_to_file(box_path, imagepath)
+
+    
 
 if __name__ == "__main__":
     image = cv2.imread("../mphys-testing/images/footballer.jpg", 0)

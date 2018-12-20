@@ -208,7 +208,7 @@ class Box(object):
         ### This should be uncommented if the file should be named as box_id
         # ##save_path = save_path + "/" + str(self._metadata.box_id) + ".avi"
 
-        
+
         temp_box = Box(self.s_map, self._metadata.starting_box_tl, self._metadata.starting_dims, self._min_size)
         print("Saving video to : ", save_path)
         # initialise writer
@@ -247,6 +247,11 @@ class Box(object):
 
         # write video
         self.playback_history(image, str(outvid_path))
+
+        # write metadata
+        writefile = open(metafile_path, "w+")
+        writefile.write(str(self.metadata.__dict__))
+        writefile.close()
 
         
 

@@ -35,12 +35,13 @@ if __name__ == "__main__":
     # check if optional savepath has been given
     # if not specified, the root directory is used
     if args.f is not None:
-        parent_save_path = Path(args.f)
+        parent_save_path = Path.home() / Path(args.f)
+        print(parent_save_path)
     else:
-        parent_save_path = Path("./")
+        parent_save_path = Path.cwd()
     
     ## image path ##
-    raw_img_path = Path(args.img_path)
+    raw_img_path = Path.home() / Path(args.img_path)
     # check that image exists
     if not raw_img_path.is_file():
         raise ValueError("Invalid image file path. File does not exist.")
@@ -92,13 +93,18 @@ if __name__ == "__main__":
     ]
 
     box_list = box_factory.minimise_boxes(box_list, directions)
-    
+
+    """
     for box in box_list:
         img = box.overlay_box(raw_img)
         cv2.imshow(box.metadata.construction_request[0], img)
         cv2.waitKey(0)
-    
-"""
+    """   
+
+    # write boxes
+    box_factory.write_boxes(box_list, parent_save_path, raw_img_path)
+
+    """
     
     # minimise salience
     lowest_cost_box = bounding_box.minimise_cost(starting_box, 50, 70, directions_list)
@@ -107,4 +113,4 @@ if __name__ == "__main__":
         cv2.imread(str(org_img_path.resolve()), 0),
         '../mphys-testing/salience-in-photographs/images/output')
     cv2.waitKey(0)
-"""
+    """

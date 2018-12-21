@@ -92,6 +92,7 @@ class Box(object):
         self._metadata = utilities.Bunch(
             box_id=binascii.b2a_hex(os.urandom(15)),
             history=[],
+            cost_history=[],
             construction_request=None,       # used to store raw request made by factory if box was created in a factory
             starting_box_tl=box_tl,
             starting_dims=dims
@@ -234,11 +235,15 @@ class Box(object):
         """
         # get image name from imagepath Path (remove file extension)
         image_name = imagepath.stem
+        if self.metadata.construction_request is not None:
+            request_name = self.metadata.construction_request[0] + "_"
+        else:
+            request_name = ""
         # build the file names
-        outimg_path = folderpath / Path("boxed_" + str(image_name) + str(imagepath.suffix))
-        outsmap_path = folderpath / Path("boxed_smap_" + str(image_name) + str(imagepath.suffix))
-        outvid_path = folderpath / Path("history_" + str(image_name) + video_ext)
-        metafile_path = folderpath / Path("metadata_" + str(image_name) + ".txt")
+        outimg_path = folderpath / Path("boxed_" + request_name + str(image_name) + str(imagepath.suffix))
+        outsmap_path = folderpath / Path("boxed_smap_" + request_name + str(image_name) + str(imagepath.suffix))
+        outvid_path = folderpath / Path("history_" + request_name + str(image_name) + video_ext)
+        metafile_path = folderpath / Path("metadata_" + request_name + str(image_name) + ".txt")
 
         # load image
         image = cv2.imread(str(imagepath))
@@ -315,7 +320,8 @@ def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=200)
         
         best_cost = min(candidate_costs)
         best_vector = candidate_vectors[candidate_costs.index(best_cost)]
-
+        # add best cost to list of cost histories
+        optimum_box.metadata.cost_history.append(best_cost)
         # check if best_vector is "no step made"
         if np.all(best_vector==0):
             print("Minimum found after", iteration, "iterations")

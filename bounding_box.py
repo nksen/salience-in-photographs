@@ -95,7 +95,8 @@ class Box(object):
             cost_history=[],
             construction_request=None,       # used to store raw request made by factory if box was created in a factory
             starting_box_tl=box_tl,
-            starting_dims=dims
+            starting_dims=dims,
+            n_transformations=0
         )
 
     # ~~ Properties ~~ #
@@ -268,7 +269,7 @@ class Box(object):
 
 import copy
 import sys
-def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=200):
+def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=10000):
     """
     Minimises the cost defined by the box class by exploring
     the saliency map space stored in the box.
@@ -322,9 +323,10 @@ def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=200)
         best_vector = candidate_vectors[candidate_costs.index(best_cost)]
         # add best cost to list of cost histories
         optimum_box.metadata.cost_history.append(best_cost)
+        optimum_box.metadata.n_transformations += 1
         # check if best_vector is "no step made"
         if np.all(best_vector==0):
-            print("Minimum found after", iteration, "iterations")
+            print("Minimum found after", iteration + 1, "iterations")
             break
 
         # apply best transformation vector to optimum_box

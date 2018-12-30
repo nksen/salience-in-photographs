@@ -153,7 +153,7 @@ class BoxFactory(object):
             boxes_list.append(box)
         return boxes_list
 
-def minimise_boxes(boxes_list, directions_lists, step_size=10, n_iterations=200):
+def minimise_boxes(boxes_list, directions_lists, step_size=10, n_iterations=10000):
     """
     Utilises multiprocessing.Pool to minimise multiple boxes simultaneously. 
     num workers is cpu_count - 1 to prevent complete CPU lockup.

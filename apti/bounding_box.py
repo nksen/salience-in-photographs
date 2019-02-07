@@ -1,11 +1,16 @@
 """
 --Naim Sen--
 --Toby Ticehurst--
-Oct 18
+
+Oct 2018
 
 bounding_box.py
 
 Box class and accompanying functions.
+
+Copyright © 2018, Naim Sen  
+Licensed under the terms of the GNU General Public License
+<https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
 # std imports

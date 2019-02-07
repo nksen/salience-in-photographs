@@ -1,9 +1,14 @@
 """
 --Naim Sen--
 --Toby Ticehurst--
+
 Oct 18
 
 Functions for preprocessing of images. 
+
+Copyright © 2018, Naim Sen
+Licensed under the terms of the GNU General Public License
+<https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
 import cv2

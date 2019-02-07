@@ -2,12 +2,18 @@
 --Naim Sen--
 --Toby Ticehurst--
 
+Dec 2018
+
 box_factory.py
 
 for creating template starting boxes (in bulk) by translating
 readable, image-agnostic requests into image-specific co-ordinates
 that are passed to the box constructor. Acts as an interface layer
 between the Box mechanics and the user-facing GUI/CLI.
+
+Copyright © 2018, Naim Sen
+Licensed under the terms of the GNU General Public License
+<https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
 # std imports

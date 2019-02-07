@@ -2,9 +2,15 @@
 --Naim Sen--
 --Toby Ticehurst--
 
+Dec 18
+
 text.py 
 
 Contains text class
+
+Copyright © 2018, Naim Sen
+Licensed under the terms of the GNU General Public License
+<https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
 import cv2

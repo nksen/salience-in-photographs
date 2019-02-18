@@ -6,6 +6,10 @@ Nov 18
 utilities.py
 
 Contains useful utilities
+
+Copyright © 2018, Naim Sen
+Licensed under the terms of the GNU General Public License
+<https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
 

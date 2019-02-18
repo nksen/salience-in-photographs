@@ -8,7 +8,7 @@ bounding_box.py
 
 Box class and accompanying functions.
 
-Copyright © 2018, Naim Sen  
+Copyright © 2018, Naim Sen 
 Licensed under the terms of the GNU General Public License
 <https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
@@ -16,6 +16,7 @@ Licensed under the terms of the GNU General Public License
 # std imports
 import os
 import cv2
+import PIL
 import copy
 import binascii
 import numpy as np
@@ -178,27 +179,38 @@ class Box(object):
         Overlays a blue box on the image provided (note, not on own
         image).
         Args:
-            image: np.array of the image that the box is to be drawn
-                   on.
+            image: np.array or PIL.Image.Image of the image that the
+            box is to be drawn on.
         Returns:
             img_with_overlay: The image with the overlaid box.
         Raises:
        
         """
-        # check if image is colour or greyscale
-        if len(image.shape) == 2:
-            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
         # define tuples for cv2.rectangle
         colour = (255, 0, 0)
         # cv2.rectangle requires corner co-ordinates to be in (x,y) not (i,j)
         # so indices are flipped.
-        tl_tuple = tuple(np.flip(self._box_tl, 0))
+        tl_tuple = tuple(np.flip(self.box_tl, 0))
         br_tuple = tuple(np.flip(self.box_br, 0))
 
-        img_with_overlay = copy.copy(image)
-        cv2.rectangle(img_with_overlay, tl_tuple, br_tuple, colour, 3)
-        return img_with_overlay
+        if isinstance(image, np.ndarray):
+            # check if image is colour or greyscale
+            if len(image.shape) == 2:
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
+            img_with_overlay = copy.copy(image)
+            # draw rectangle
+            cv2.rectangle(img_with_overlay, tl_tuple, br_tuple, colour, 3)
+            return img_with_overlay
+        elif isinstance(image, PIL.Image.Image):
+            img_with_overlay = copy.copy(image)
+            xy = (tuple(self.box_tl),
+                  tuple(self.box_br))
+            shape_writer = PIL.ImageDraw.Draw(img_with_overlay)
+            shape_writer.rectangle(xy)
+            return img_with_overlay
+
 
     def playback_history(self, image, save_path):
         """
@@ -342,26 +354,31 @@ def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=1000
     # Put optimum box printout here if necessary
     return optimum_box
 
-
 import directions_factory
-if __name__ == "__main__":
+def main():
     """
     For testing only.
     """
     # load image
-    image = cv2.imread("../mphys-testing/images/birds_salience_map.jpg", 0)
+    image = cv2.imread(r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\delpotro.jpg', 0)
     y = image.shape[0]
     x = image.shape[1]
     starting_box = Box(image, np.array([220, 440]), np.array([100, 100]), np.array([60, 60]))
-    print(starting_box.box_br)
+   
+   # print(starting_box.box_br)
     directions_list = directions_factory.unconstrained()
 
     lowest_cost_box = minimise_cost(starting_box, directions_list, 50, 70)
     
-    lowest_cost_box.write_to_file(Path("../mphys-testing/images/output/testingwrite/"), Path("../mphys-testing/images/birds.jpg"))
+    print(type(image))
+
+   # lowest_cost_box.write_to_file(Path("../mphys-testing/images/output/testingwrite/"), Path("../mphys-testing/images/birds.jpg"))
    
    # cv2.imshow("box", lowest_cost_box.overlay_box(image))
    # print(lowest_cost_box._metadata.history)
 
    # lowest_cost_box.playback_history(cv2.imread("../mphys-testing/images/birds.jpg", 0), '../mphys-testing/salience-in-photographs/images/output')
    # cv2.waitKey(0)
+
+if __name__ == "__main__":
+    main()

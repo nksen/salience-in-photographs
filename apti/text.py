@@ -10,6 +10,7 @@ Contains text class
 from pathlib import PurePath
 import numpy as np
 import cv2
+from PIL import Image
 
 from bounding_box import Box
 import preprocessing
@@ -62,14 +63,14 @@ class Text(object):
         box_shape = text_box.shape
 
         # Construct ImageText object
-        img = utilities.ImageText(raw_img_path)
-        img.write_text_box(box_tl, self._raw_text, box_shape[1],
+        text_writer = utilities.ImageText(raw_img_path)
+        text_writer.write_text_box(box_tl, self._raw_text, box_shape[1],
                            font_filename=str(self._font_path),
                            font_size=self._font_size,
                            color=self._colour,
                            place=self._alignment
                            )
-        return img
+        return text_writer
 
 
 def main():
@@ -78,16 +79,17 @@ def main():
     """
     # load image
     raw_img = cv2.imread(r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\delpotro.jpg')
+    PIL_img = Image.open(r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\delpotro.jpg')
     s_map = preprocessing.generate_saliency_map(raw_img)
-    text_box = Box(s_map, np.array([0, 0]), np.array([100, 100]))
+    text_box = Box(s_map, np.array([0, 0]), np.array([2000, 2000]))
     print(text_box)
 
     raw = "This is a sentence that is going to be long This is a sentence that is going to be long This is a sentence and that is going to be long This is a sentence that is going to be long."
     fontpath = PurePath(r'../assets/BBCReithSans_Bd.ttf')
     trialtext = Text(raw, fontpath, 40)
-    img = trialtext.draw(text_box, r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\delpotro.jpg')
-    img.image.show()
-
+    text_writer = trialtext.draw(text_box, r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\delpotro.jpg')
+    text_box.overlay_box(PIL_img)
+    PIL_img.show()
 
 if __name__ == "__main__":
     main()

@@ -12,6 +12,7 @@ Licensed under the terms of the GNU General Public License
 <https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
+import PIL
 
 class Bunch(object):
     """
@@ -46,6 +47,12 @@ class ImageText(object):
             self.size = filename_or_size
             self.image = Image.new(mode, self.size, color=background)
             self.filename = None
+        #>>>> Added by Naim Sen
+        elif isinstance(filename_or_size, PIL.Image.Image):
+            self.image = filename_or_size
+            self.size = self.image.size
+            self.filename = self.image.filename if hasattr(self.image, 'filename') else None
+        #<<<<
         else:
             raise TypeError("ImageText __init__() : invalid filename_or_size type. %s" %\
                             type(filename_or_size)) 

@@ -8,6 +8,7 @@ Contains text class
 """
 
 from pathlib import PurePath
+import copy
 import numpy as np
 import cv2
 from PIL import Image
@@ -49,10 +50,9 @@ class Text(object):
 
     # ~~ properties ~~ #
     # ~~ methods ~~ #
-    def draw(self, text_box, raw_img_path):
+    def draw(self, text_box, raw_img):
         """
         Draws text on the image provided given a constraining box shape
-        # TODO: Just pass Box class instead and grab all the things we need from it.
         TODO: Pass bg_colour to ImageText so that text can have a darker
               background if desired. Default should be transparent. If handled
               by the draw method instead of ImageText it should be done before
@@ -60,17 +60,34 @@ class Text(object):
         """
         # grab useful bits from the box
         box_tl = text_box.box_tl
+        box_br = text_box.box_br
         box_shape = text_box.shape
+        # account for padding
+        padding_size = utilities.estimate_stroke_width(raw_img.size)
+
+        # determine box's proximity to edges
+        # create modifiable text dimensions
+        text_tl = copy.copy(box_tl)
+        text_br = copy.copy(box_br)
+        if box_tl[0] < padding_size:
+            text_tl[0] = padding_size
+        if box_tl[1] < padding_size:
+            text_tl[1] = padding_size
+        if box_br[0] > raw_img.size[0] - padding_size:
+            text_br[0] = raw_img.size[0] - padding_size - box_shape[0]
+        if box_br[1] > raw_img.size[1] - padding_size:
+            text_br[1] = raw_img.size[1] - padding_size - box_shape[1]
 
         # Construct ImageText object
-        text_writer = utilities.ImageText(raw_img_path)
-        text_writer.write_text_box(box_tl, self._raw_text, box_shape[1],
-                           font_filename=str(self._font_path),
-                           font_size=self._font_size,
-                           color=self._colour,
-                           place=self._alignment
-                           )
-        return text_writer
+        text_writer = utilities.ImageText(raw_img)
+        print("txt tl: " + str(text_tl))
+        print("text br: " + str(text_br))
+        text_writer.write_text_box(text_tl, self._raw_text, box_shape[1],
+                                   font_filename=str(self._font_path),
+                                   font_size=self._font_size,
+                                   color=self._colour,
+                                   place=self._alignment
+                                   )
 
 
 def main():
@@ -78,18 +95,18 @@ def main():
     main for testing
     """
     # load image
-    raw_img = cv2.imread(r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\delpotro.jpg')
-    PIL_img = Image.open(r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\delpotro.jpg')
+    raw_img = cv2.imread(r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\flintoff football getty.jpg')
+    pil_img = Image.open(r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\flintoff football getty.jpg')
     s_map = preprocessing.generate_saliency_map(raw_img)
-    text_box = Box(s_map, np.array([0, 0]), np.array([2000, 2000]))
+    text_box = Box(s_map, np.array([raw_img.shape[0] - 501, raw_img.shape[1] - 501]), np.array([500, 500]))
     print(text_box)
 
     raw = "This is a sentence that is going to be long This is a sentence that is going to be long This is a sentence and that is going to be long This is a sentence that is going to be long."
     fontpath = PurePath(r'../assets/BBCReithSans_Bd.ttf')
     trialtext = Text(raw, fontpath, 40)
-    text_writer = trialtext.draw(text_box, r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\delpotro.jpg')
-    text_box.overlay_box(PIL_img)
-    #PIL_img.show()
+    trialtext.draw(text_box, pil_img)
+    pil_img.show()
+
 
 if __name__ == "__main__":
     main()

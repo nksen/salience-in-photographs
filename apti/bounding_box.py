@@ -82,7 +82,7 @@ class Box(object):
         # compute and check box_br
         box_br = np.add(box_tl, dims)
         if box_br[0] > s_map.shape[0] or box_br[1] > s_map.shape[1]:
-            raise ValueError("Box drawn out of range.")
+            raise ValueError("Box drawn out of range.\n" + str(box_br))
         else:
             self._box_br = box_br
         
@@ -186,13 +186,6 @@ class Box(object):
         Raises:
        
         """
-        # function to calculate stroke width from dimensions
-        def estimate_stroke_width(x, y, fraction):
-            """
-            Estimates an appropriate stroke width by multiplying the 
-            average image dimension by some constant factor
-            """
-            return int(0.5 * fraction * (x+y))
 
         # define tuples for cv2.rectangle
         colour = (255, 0, 0)
@@ -209,18 +202,18 @@ class Box(object):
             if len(image.shape) == 2:
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
             # get stroke width from image dimensions
-            stroke_width = estimate_stroke_width(img_with_overlay.shape[0], img_with_overlay.shape[1], 0.005)
+            stroke_width = utilities.estimate_stroke_width(img_with_overlay.shape)
             # draw rectangle
             cv2.rectangle(img_with_overlay, tl_tuple, br_tuple, colour, stroke_width)
             return img_with_overlay
-       
+
          # Handle PIL images
         elif isinstance(image, PIL.Image.Image):
             # copy image
             img_with_overlay = copy.copy(image)
             dims = (tuple(self.box_tl), tuple(self.box_br))
             # get stroke width from image dimensions
-            stroke_width = estimate_stroke_width(img_with_overlay.size[0], img_with_overlay.size[1], 0.005)
+            stroke_width = utilities.estimate_stroke_width(img_with_overlay.size)
             # instantiate Draw context
             shape_writer = PIL.ImageDraw.Draw(img_with_overlay)
             shape_writer.rectangle(dims, outline=colour, width=stroke_width)

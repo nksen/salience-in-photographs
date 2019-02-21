@@ -13,6 +13,7 @@ Licensed under the terms of the GNU General Public License
 """
 
 import PIL
+import math
 
 class Bunch(object):
     """
@@ -21,6 +22,16 @@ class Bunch(object):
     """
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
+
+# function to calculate stroke width from dimensions
+def estimate_stroke_width(image_dims, fraction=0.005):
+    """
+    Estimates an appropriate stroke width by multiplying the
+    average image dimension by some constant factor
+    """
+    i = image_dims[0]
+    j = image_dims[1]
+    return int(math.ceil(0.5 * fraction * (i+j)))
 
 """
 The ImageText code below has been adapted for use in this project. Original source 

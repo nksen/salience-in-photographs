@@ -186,6 +186,13 @@ class Box(object):
         Raises:
        
         """
+        # function to calculate stroke width from dimensions
+        def estimate_stroke_width(x, y, fraction):
+            """
+            Estimates an appropriate stroke width by multiplying the 
+            average image dimension by some constant factor
+            """
+            return int(0.5 * fraction * (x+y))
 
         # define tuples for cv2.rectangle
         colour = (255, 0, 0)
@@ -194,21 +201,29 @@ class Box(object):
         tl_tuple = tuple(np.flip(self.box_tl, 0))
         br_tuple = tuple(np.flip(self.box_br, 0))
 
+        # Handle CV images
         if isinstance(image, np.ndarray):
+            # copy image
+            img_with_overlay = copy.copy(image)
             # check if image is colour or greyscale
             if len(image.shape) == 2:
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-
-            img_with_overlay = copy.copy(image)
+            # get stroke width from image dimensions
+            stroke_width = estimate_stroke_width(img_with_overlay.shape[0], img_with_overlay.shape[1], 0.005)
             # draw rectangle
-            cv2.rectangle(img_with_overlay, tl_tuple, br_tuple, colour, 3)
+            cv2.rectangle(img_with_overlay, tl_tuple, br_tuple, colour, stroke_width)
             return img_with_overlay
+       
+         # Handle PIL images
         elif isinstance(image, PIL.Image.Image):
+            # copy image
             img_with_overlay = copy.copy(image)
-            xy = (tuple(self.box_tl),
-                  tuple(self.box_br))
+            dims = (tuple(self.box_tl), tuple(self.box_br))
+            # get stroke width from image dimensions
+            stroke_width = estimate_stroke_width(img_with_overlay.size[0], img_with_overlay.size[1], 0.005)
+            # instantiate Draw context
             shape_writer = PIL.ImageDraw.Draw(img_with_overlay)
-            shape_writer.rectangle(xy)
+            shape_writer.rectangle(dims, outline=colour, width=stroke_width)
             return img_with_overlay
 
 

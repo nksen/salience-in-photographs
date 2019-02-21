@@ -89,7 +89,7 @@ def main():
     trialtext = Text(raw, fontpath, 40)
     text_writer = trialtext.draw(text_box, r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\delpotro.jpg')
     text_box.overlay_box(PIL_img)
-    PIL_img.show()
+    #PIL_img.show()
 
 if __name__ == "__main__":
     main()

@@ -205,18 +205,27 @@ class Box(object):
             stroke_width = utilities.estimate_stroke_width(img_with_overlay.shape)
             # draw rectangle
             cv2.rectangle(img_with_overlay, tl_tuple, br_tuple, colour, stroke_width)
+            """
+            cv2.namedWindow("cv2", cv2.WINDOW_NORMAL)        # Create a named window
+            cv2.moveWindow("cv2", 40, 30)  # Move it to (40,30)
+            cv2.imshow("cv2", img_with_overlay)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            """
             return img_with_overlay
 
          # Handle PIL images
         elif isinstance(image, PIL.Image.Image):
             # copy image
             img_with_overlay = copy.copy(image)
-            dims = (tuple(self.box_tl), tuple(self.box_br))
+            # dims are reversed to conform with image drawing convention
+            dims = ((self.box_br[1], self.box_br[0]), (self.box_tl[1], self.box_tl[0]))
             # get stroke width from image dimensions
             stroke_width = utilities.estimate_stroke_width(img_with_overlay.size)
             # instantiate Draw context
             shape_writer = PIL.ImageDraw.Draw(img_with_overlay)
             shape_writer.rectangle(dims, outline=colour, width=stroke_width)
+            #img_with_overlay.show()
             return img_with_overlay
 
 

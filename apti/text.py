@@ -67,10 +67,10 @@ class Text(object):
 
         # determine box's proximity to edges
         # create modifiable text dimensions
-        
+
         text_tl = copy.copy(box_tl)
         text_br = copy.copy(box_br)
-        
+
         if box_tl[0] < padding_size:
             text_tl[0] = padding_size
         if box_tl[1] < padding_size:
@@ -79,12 +79,11 @@ class Text(object):
             text_br[0] = raw_img.size[0] - padding_size - box_shape[0]
         if box_br[1] > raw_img.size[1] - padding_size:
             text_br[1] = raw_img.size[1] - padding_size - box_shape[1]
-        
+
         # Construct ImageText object
         text_writer = utilities.ImageText(raw_img)
-        print("txt tl: " + str(text_tl))
-        print("text br: " + str(text_br))
-        # write_text_box is passed text_tl reversed to conform with PIL.ImageText (xy not ij) convention
+
+        # write_text_box dims must conform with PIL.ImageText (xy not ij) convention
         text_writer.write_text_box((text_tl[1], text_tl[0]), self._raw_text, box_shape[1],
                                    font_filename=str(self._font_path),
                                    font_size=self._font_size,
@@ -102,21 +101,21 @@ def main():
     pil_img = Image.open(r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\flintoff football getty.jpg')
     s_map = preprocessing.generate_saliency_map(raw_img)
 
-    text_box = Box(s_map, np.array([0, 0]), np.array([500, 800]))
-    #text_box = Box(s_map, np.array([raw_img.shape[1] - 601, raw_img.shape[0] - 601]), np.array([500, 500]))
-    print("smap shape: ", s_map.shape)
-    print("img shape: ", raw_img.shape)
+    #text_box = Box(s_map, np.array([0, 0]), np.array([500, 800]))
+    text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]), np.array([500, 500]))
 
     raw = "This is a sentence that is going to be long This is a sentence that is going to be long This is a sentence and that is going to be long This is a sentence that is going to be long."
     fontpath = PurePath(r'../assets/BBCReithSans_Bd.ttf')
-    trialtext = Text(raw, fontpath, 40)
-    trialtext.draw(text_box, pil_img)
+    text_context = Text(raw, fontpath, 40)
+    text_context.draw(text_box, pil_img)
     pil_out = text_box.overlay_box(pil_img)
+    
+    """
     cv_out = text_box.overlay_box(raw_img)
-
     cv2.namedWindow("cv2", cv2.WINDOW_NORMAL)        # Create a named window
     cv2.moveWindow("cv2", 40, 30)  # Move it to (40,30)
     cv2.imshow("cv2", cv_out)
+    """
 
     pil_out.show()
 

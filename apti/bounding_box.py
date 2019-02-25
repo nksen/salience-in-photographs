@@ -218,7 +218,7 @@ class Box(object):
         elif isinstance(image, PIL.Image.Image):
             # copy image
             img_with_overlay = copy.copy(image)
-            # dims are reversed to conform with image drawing convention
+            # dims are reversed to conform with PIL.ImageDraw.Draw.rectangle() [xy not ij]
             dims = ((self.box_br[1], self.box_br[0]), (self.box_tl[1], self.box_tl[0]))
             # get stroke width from image dimensions
             stroke_width = utilities.estimate_stroke_width(img_with_overlay.size)

@@ -84,7 +84,7 @@ class Text(object):
         text_writer = utilities.ImageText(raw_img)
         print("txt tl: " + str(text_tl))
         print("text br: " + str(text_br))
-        # write_text_box is passed text_tl reversed to conform with image (columns, rows) convention
+        # write_text_box is passed text_tl reversed to conform with PIL.ImageText (xy not ij) convention
         text_writer.write_text_box((text_tl[1], text_tl[0]), self._raw_text, box_shape[1],
                                    font_filename=str(self._font_path),
                                    font_size=self._font_size,

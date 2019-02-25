@@ -119,17 +119,17 @@ class ImageText(object):
            (max_width is not None or max_height is not None):
             font_size = self.get_font_size(text, font_filename, max_width,
                                            max_height)
-        
+
         # otherwise get the text size the usual way
         text_size = self.get_text_size(font_filename, font_size, text)
         font = ImageFont.truetype(font_filename, font_size)
-        
+
         # (x,y)='center' keyword
         if x == 'center':
             x = (self.size[0] - text_size[0]) / 2
         if y == 'center':
             y = (self.size[1] - text_size[1]) / 2
-        
+
         self.draw.text((x, y), text, font=font, fill=color)
         return text_size
 
@@ -148,7 +148,7 @@ class ImageText(object):
         x, y = xy
         lines = []                          # list of wrapped lines
         line = []                           # list of words in current line
-        words = text.split()                # list of all words 
+        words = text.split()                # list of all words
         
         for word in words:
             new_line = ' '.join(line + [word])
@@ -171,8 +171,6 @@ class ImageText(object):
         height = y
         # loop over lines and write (account for alignment)
         for index, line in enumerate(lines):
-            # get height
-            height += text_height
             # left aligned
             if place == 'left':
                 self.write_text((x, height), line, font_filename, font_size,
@@ -200,7 +198,7 @@ class ImageText(object):
                 line_without_spaces = ''.join(words)
                 total_size = self.get_text_size(font_filename, font_size,
                                                 line_without_spaces)
-                # even spacing between words 
+                # even spacing between words
                 space_width = (box_width - total_size[0]) / (len(words) - 1.0)
                 start_x = x
                 for word in words[:-1]:
@@ -214,4 +212,6 @@ class ImageText(object):
                 last_word_x = x + box_width - last_word_size[0]
                 self.write_text((last_word_x, height), words[-1], font_filename,
                                 font_size, color)
+            # get height
+            height += text_height
         return (box_width, height - y)

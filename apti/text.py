@@ -84,13 +84,15 @@ class Text(object):
         text_writer = utilities.ImageText(raw_img)
 
         # write_text_box dims must conform with PIL.ImageText (xy not ij) convention
-        text_writer.write_text_box((text_tl[1], text_tl[0]), self._raw_text, box_shape[1],
-                                   font_filename=str(self._font_path),
-                                   font_size=self._font_size,
-                                   color=self._colour,
-                                   place=self._alignment
-                                   )
+        text_xy = text_writer.write_text_box((text_tl[1], text_tl[0]), self._raw_text, box_shape[1],
+                                             font_filename=str(self._font_path),
+                                             font_size=self._font_size,
+                                             color=self._colour,
+                                             place=self._alignment
+                                             )
 
+        # Add scrim
+        ##scrim_draw_context = PIL.ImageDraw.draw(raw_img)
 
 def main():
     """
@@ -101,14 +103,15 @@ def main():
     pil_img = Image.open(r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\flintoff football getty.jpg')
     s_map = preprocessing.generate_saliency_map(raw_img)
 
-    #text_box = Box(s_map, np.array([0, 0]), np.array([500, 800]))
-    text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]), np.array([500, 500]))
+    text_box = Box(s_map, np.array([500, 0]), np.array([500, 800]))
+    #text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]), np.array([500, 800]))
+    drawn_box = Box(s_map, np.array([500, 0]), np.array([1150, 800]))
 
-    raw = "This is a sentence that is going to be long This is a sentence that is going to be long This is a sentence and that is going to be long This is a sentence that is going to be long."
+    raw = r'This is a sentence that is going to be long This is a sentence that is going to be long This is a sentence and that is going to be long This is a sentence that is going to be long.'
     fontpath = PurePath(r'../assets/BBCReithSans_Bd.ttf')
-    text_context = Text(raw, fontpath, 40)
+    text_context = Text(raw, fontpath, 90)
     text_context.draw(text_box, pil_img)
-    pil_out = text_box.overlay_box(pil_img)
+    pil_out = drawn_box.overlay_box(pil_img)
     
     """
     cv_out = text_box.overlay_box(raw_img)

@@ -19,6 +19,9 @@ from bounding_box import Box
 import preprocessing
 import utilities
 
+BBC_YELLOW = (255, 210, 47)
+BBC_GREY = (50, 50, 50)
+
 
 # draw transparent box on PIL image
 def composite_draw(xy, RGBA, raw_img):
@@ -53,7 +56,7 @@ class Text(object):
                  font_path,
                  size_pt,
                  alignment='left',
-                 colour=(255, 255, 255),
+                 colour=BBC_YELLOW,
                  bg_colour=(0, 0, 0, 0)):
         """
         Init function
@@ -124,11 +127,12 @@ class Text(object):
             color=self._colour,
             place=self._alignment)
         # add padding
-        scrim_dims = (text_xy[0] + padding_size, text_xy[1] + padding_size)
-        scrim_tl = (text_tl[1], text_tl[0])
-        scrim_br = (text_tl[1] + text_xy[0], text_tl[0] + text_xy[1])
+        scrim_tl = (text_tl[1] - padding_size, text_tl[0])
+        scrim_br = (text_tl[1] + text_xy[0] + padding_size,
+                    text_tl[0] + text_xy[1] + padding_size)
         # draw scrim
-        out_img = composite_draw((scrim_tl, scrim_br), (0, 0, 0, 127), raw_img)
+        out_img = composite_draw((scrim_tl, scrim_br), BBC_GREY + (127, ),
+                                 raw_img)
 
         # Construct ImageText context
         text_writer = utilities.ImageText(out_img)

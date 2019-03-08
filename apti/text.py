@@ -19,6 +19,7 @@ from bounding_box import Box
 import preprocessing
 import utilities
 
+# TODO: Procedural colour if necessary?
 BBC_YELLOW = (255, 210, 47)
 BBC_GREY = (50, 50, 50)
 

@@ -15,7 +15,8 @@ import numpy as np
 import cv2
 from PIL import Image, ImageDraw
 
-from bounding_box import Box
+from bounding_box import Box, minimise_cost
+import directions_factory
 import preprocessing
 import utilities
 
@@ -155,22 +156,24 @@ def main():
     """
     # load image
     raw_img = cv2.imread(
-        r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\flintoff football getty.jpg'
+        r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\dalot.jpg'
     )
     pil_img = Image.open(
-        r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\flintoff football getty.jpg'
+        r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\dalot.jpg'
     )
     s_map = preprocessing.generate_saliency_map(raw_img)
 
-    text_box = Box(s_map, np.array([650, 200]), np.array([500, 800]))
+    init_box = Box(s_map, np.array([0, 0]), np.array([200, 300]))
     #text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]), np.array([500, 800]))
     #drawn_box = Box(s_map, np.array([500, 0]), np.array([1150, 800]))
+    directions_list = directions_factory.unconstrained()
+    text_box = minimise_cost(init_box, directions_list)
 
     raw = r"Andy Murray: Former Wimbledon champion is |pain free| after hip injury."
     fontpath = PurePath(r'../assets/BBCReithSans_Bd.ttf')
-    text_context = Text(raw, fontpath, 90)
+    text_context = Text(raw, fontpath, 70)
     pil_out = text_context.draw(text_box, pil_img)
-    #pil_out = drawn_box.overlay_box(pil_out)
+    pil_out = init_box.overlay_box(pil_out)
     """
     cv_out = text_box.overlay_box(raw_img)
     cv2.namedWindow("cv2", cv2.WINDOW_NORMAL)        # Create a named window

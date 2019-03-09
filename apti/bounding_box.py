@@ -15,14 +15,17 @@ Licensed under the terms of the GNU General Public License
 
 # std imports
 import os
-import cv2
-import PIL
 import copy
 import binascii
-import numpy as np
 from pathlib import Path
+
+import cv2
+import PIL
+import numpy as np
+
 # module imports
 import utilities
+import directions_factory
 
 
 class Box(object):
@@ -334,7 +337,7 @@ def minimise_cost(starting_box,
         
     """
 
-    optimum_box = starting_box
+    optimum_box = copy.copy(starting_box)
     # loop over n iterations. Each iteration consists of constructing
     # boxes by moving the current box according to each direction in
     # direction list. The costs and corresponding direction is recorded
@@ -381,9 +384,6 @@ def minimise_cost(starting_box,
         #print(best_cost)
     # Put optimum box printout here if necessary
     return optimum_box
-
-
-import directions_factory
 
 
 def main():

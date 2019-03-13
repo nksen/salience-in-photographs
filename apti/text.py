@@ -8,6 +8,7 @@ Contains text class
 """
 
 from pathlib import PurePath
+from math import sqrt
 import copy
 import time
 
@@ -82,14 +83,43 @@ class Text(object):
         return self._raw_text
 
     # ~~ properties ~~ #
+    def scale_font_size(self,
+                        original_image_dims,
+                        target_image_size=5,
+                        target_dpi=114):
+        """
+        Scales the font size from target size to the size required for
+        the high-res original.
+        
+        Args:
+            target_font_size: font size in pt for the target scale.
+
+            target_image_size: tuple (dimensions in inches) or int (diagonal in inches).
+
+            target_dpi: desired resolution in DPI (px/inch).
+
+        returns:
+            scaled_font_size: up-scaled font size in pt.
+
+        raises:
+
+        """
+        original_diagonal = sqrt(
+            pow(original_image_dims[0], 2) + pow(original_image_dims[1], 2))
+        if isinstance(target_image_size, int):
+            # originial/target scaling factor
+            scale_factor = original_diagonal / target_image_size
+        elif isinstance(target_image_size, tuple):
+            target_diagonal = sqrt(
+                pow(target_image_size[0], 2) + pow(target_image_size[1], 2))
+            scale_factor = original_diagonal / target_diagonal
+
+        print((scale_factor / target_dpi) * 24)
+
     # ~~ methods ~~ #
     def draw(self, text_box, raw_img):
         """
         Draws text on the image provided given a constraining box shape
-        TODO: Pass bg_colour to ImageText so that text can have a darker
-              background if desired. Default should be transparent. If handled
-              by the draw method instead of ImageText it should be done before
-              drawing of the text.
         """
         # grab useful bits from the box
         box_tl = text_box.box_tl
@@ -156,10 +186,10 @@ def main():
     """
     # load image
     raw_img = cv2.imread(
-        r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\dalot.jpg'
+        r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\klopp getty.jpg'
     )
     pil_img = Image.open(
-        r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\dalot.jpg'
+        r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\klopp getty.jpg'
     )
     s_map = preprocessing.generate_saliency_map(raw_img)
 
@@ -171,7 +201,11 @@ def main():
 
     raw = r"Andy Murray: Former Wimbledon champion is |pain free| after hip injury."
     fontpath = PurePath(r'../assets/BBCReithSans_Bd.ttf')
-    text_context = Text(raw, fontpath, 70)
+    text_context = Text(raw, fontpath, 104)
+    text_context.scale_font_size(pil_img.size)
+
+    #exit()
+
     pil_out = text_context.draw(text_box, pil_img)
     pil_out = init_box.overlay_box(pil_out)
     """

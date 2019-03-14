@@ -192,8 +192,10 @@ class ImageText(object):
         # add spaces to word endings
         lines = [' '.join(line) for line in lines if line]
         height = y
+        width = 0
         # loop over lines and write (account for alignment)
         for index, line in enumerate(lines):
+            line_width = self.get_text_size(font_filename, font_size, line)[0]
             # left aligned
             if place == 'left':
                 self.write_text((x, height), line, font_filename, font_size,
@@ -237,4 +239,10 @@ class ImageText(object):
                                 font_filename, font_size, color)
             # get height
             height += text_height
-        return (box_width, height - y)
+            # get width
+            if width < line_width:
+                width = line_width
+
+        return (width, height - y)
+
+    # return (box_width, height - y)

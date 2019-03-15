@@ -31,7 +31,6 @@ def composite_draw(xy, RGBA, raw_img):
     """
     Draws RGBA rectangle given corner coordinates xy
     """
-
     img = raw_img.convert("RGBA")
 
     # Make a blank image for the rectangle, initialized to a completely
@@ -40,7 +39,6 @@ def composite_draw(xy, RGBA, raw_img):
 
     # Create a draw context.
     draw = ImageDraw.Draw(tmp)
-
     draw.rectangle(xy, fill=RGBA)
 
     # Alpha composite the two images together.
@@ -57,10 +55,10 @@ class Text(object):
     def __init__(self,
                  in_text,
                  font_path,
-                 size_pt,
+                 size_pt=24,
                  alignment='left',
                  colour=BBC_YELLOW,
-                 bg_colour=(0, 0, 0, 0)):
+                 bg_colour=BBC_GREY):
         """
         Init function
         """
@@ -83,38 +81,38 @@ class Text(object):
         return self._raw_text
 
     # ~~ properties ~~ #
-    def scale_font_size(self,
-                        original_image_dims,
-                        target_image_size=5,
-                        target_dpi=114):
+    def rescale_font_size(self,
+                          original_image_dims,
+                          target_image_size=5,
+                          target_dpi=114):
         """
+        MODIFIES OBJECT
         Scales the font size from target size to the size required for
-        the high-res original.
-        
+        the high-res original: font size must be increased in order to
+        be drawn at the correct size for the small image size.
         Args:
             target_font_size: font size in pt for the target scale.
-
             target_image_size: tuple (dimensions in inches) or int (diagonal in inches).
-
             target_dpi: desired resolution in DPI (px/inch).
-
         returns:
-            scaled_font_size: up-scaled font size in pt.
-
         raises:
-
         """
         original_diagonal = sqrt(
             pow(original_image_dims[0], 2) + pow(original_image_dims[1], 2))
+        # Image size can be passed as a single measurement of the diagonal...
         if isinstance(target_image_size, int):
-            # originial/target scaling factor
+            # original divide target: scaling factor
             scale_factor = original_diagonal / target_image_size
+        # or passed as a tuple dimensions (shape) pair
         elif isinstance(target_image_size, tuple):
             target_diagonal = sqrt(
                 pow(target_image_size[0], 2) + pow(target_image_size[1], 2))
             scale_factor = original_diagonal / target_diagonal
 
-        print((scale_factor / target_dpi) * 24)
+        scaled_size_pt = int((scale_factor / target_dpi) * self._font_size)
+        # assign new, scaled font size and keep copy of original
+        self._desired_font_size = self._font_size
+        self._font_size = scaled_size_pt
 
     # ~~ methods ~~ #
     def draw(self, text_box, raw_img):
@@ -163,8 +161,8 @@ class Text(object):
         scrim_br = (text_tl[1] + text_xy[0] + padding_size,
                     text_tl[0] + text_xy[1] + padding_size)
         # draw scrim
-        out_img = composite_draw((scrim_tl, scrim_br), BBC_GREY + (127, ),
-                                 raw_img)
+        out_img = composite_draw((scrim_tl, scrim_br),
+                                 self._bg_colour + (127, ), raw_img)
 
         # Construct ImageText context
         text_writer = utilities.ImageText(out_img)
@@ -201,8 +199,8 @@ def main():
 
     raw = r"Andy Murray: Former Wimbledon champion is |pain free| after hip injury."
     fontpath = PurePath(r'../assets/BBCReithSans_Bd.ttf')
-    text_context = Text(raw, fontpath, 104)
-    text_context.scale_font_size(pil_img.size)
+    text_context = Text(raw, fontpath, size_pt=24)
+    text_context.rescale_font_size(pil_img.size)
 
     #exit()
 

@@ -160,6 +160,9 @@ class Text(object):
         scrim_tl = (text_tl[1] - padding_size, text_tl[0])
         scrim_br = (text_tl[1] + text_xy[0] + padding_size,
                     text_tl[0] + text_xy[1] + padding_size)
+        # check if scrim exceeds image dimensions
+        if scrim_br[0] < raw_img.size[0] or scrim_br[1] < raw_img.size[1]:
+            print("WARN: Text drawn out of bounds.")
         # draw scrim
         out_img = composite_draw((scrim_tl, scrim_br),
                                  self._bg_colour + (127, ), raw_img)
@@ -191,11 +194,11 @@ def main():
     )
     s_map = preprocessing.generate_saliency_map(raw_img)
 
-    init_box = Box(s_map, np.array([0, 0]), np.array([200, 300]))
+    init_box = Box(s_map, np.array([0, 0]), np.array([700, 300]))
     #text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]), np.array([500, 800]))
     #drawn_box = Box(s_map, np.array([500, 0]), np.array([1150, 800]))
     directions_list = directions_factory.unconstrained()
-    text_box = minimise_cost(init_box, directions_list)
+    #text_box = minimise_cost(init_box, directions_list)
 
     raw = r"Andy Murray: Former Wimbledon champion is |pain free| after hip injury."
     fontpath = PurePath(r'../assets/BBCReithSans_Bd.ttf')

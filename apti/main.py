@@ -2,13 +2,8 @@
 --Naim Sen--
 --Toby Ticehurst--
 
-Dec 2018
-
 main.py
 
-Copyright © 2018, Naim Sen
-Licensed under the terms of the GNU General Public License
-<https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
 ## ==== Imports ==== ##
@@ -23,10 +18,10 @@ import bounding_box
 import directions_factory as df
 import box_factory
 
-
-
-if __name__ == "__main__":
-
+def main():
+    """
+    main function for running the minimisation on the a test image
+    """
     # ==== handle user input ==== #
     # declare parser
     parser = argparse.ArgumentParser()
@@ -59,7 +54,7 @@ if __name__ == "__main__":
         raise ValueError("Invalid image file path.")
     # process image
     s_map = preprocessing.generate_saliency_map(raw_img, to_display=True)
-    
+
     # ==== generate boxes and directions ==== #
     factory = box_factory.BoxFactory(s_map, text=None)
     # generate requests for the factory
@@ -104,13 +99,13 @@ if __name__ == "__main__":
         img = box.overlay_box(raw_img)
         cv2.imshow(box.metadata.construction_request[0], img)
         cv2.waitKey(0)
-    """   
+    """
 
     # write boxes
     box_factory.write_boxes(box_list, parent_save_path, raw_img_path)
 
     """
-    
+   
     # minimise salience
     lowest_cost_box = bounding_box.minimise_cost(starting_box, 50, 70, directions_list)
     lowest_cost_box.playback_history(
@@ -119,3 +114,8 @@ if __name__ == "__main__":
         '../mphys-testing/salience-in-photographs/images/output')
     cv2.waitKey(0)
     """
+
+
+if __name__ == "__main__":
+    main()
+    

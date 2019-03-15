@@ -8,20 +8,24 @@ bounding_box.py
 
 Box class and accompanying functions.
 
-Copyright © 2018, Naim Sen  
+Copyright © 2018, Naim Sen 
 Licensed under the terms of the GNU General Public License
 <https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
 # std imports
 import os
-import cv2
 import copy
 import binascii
-import numpy as np
 from pathlib import Path
+
+import cv2
+import PIL
+import numpy as np
+
 # module imports
 import utilities
+import directions_factory
 
 
 class Box(object):
@@ -43,6 +47,7 @@ class Box(object):
                  box. This is updated if the box is translated or
                  resized.    
     """
+
     def __init__(self, s_map, box_tl, dims, minimum_size=np.array([0, 0])):
         """
         Box object initialiser
@@ -66,13 +71,13 @@ class Box(object):
             raise ValueError("Dimensions must be non-negative.")
         if any(element < 0 for element in minimum_size):
             raise ValueError("Min size must be non-negative.")
-        
+
         # check that dimensions are large than minimum_size
         if dims[0] < minimum_size[0]:
             raise ValueError("i'th dimension is less than minimum size.")
         if dims[1] < minimum_size[1]:
             raise ValueError("j'th dimension is less than minimum size.")
-        
+
         # assign vars
         self._box_tl = box_tl
         self._dims = dims
@@ -81,10 +86,10 @@ class Box(object):
         # compute and check box_br
         box_br = np.add(box_tl, dims)
         if box_br[0] > s_map.shape[0] or box_br[1] > s_map.shape[1]:
-            raise ValueError("Box drawn out of range.")
+            raise ValueError("Box drawn out of range.\n" + str(box_br))
         else:
             self._box_br = box_br
-        
+
         # grab data inside box from s_map
         # create numpy mask
         mask_i = np.arange(box_tl[0], box_br[0], 1).tolist()
@@ -98,11 +103,11 @@ class Box(object):
             box_id=binascii.b2a_hex(os.urandom(15)),
             history=[],
             cost_history=[],
-            construction_request=None,       # used to store raw request made by factory if box was created in a factory
+            construction_request=
+            None,  # used to store raw request made by factory if box was created in a factory
             starting_box_tl=box_tl,
             starting_dims=dims,
-            n_transformations=0
-        )
+            n_transformations=0)
 
     # ~~ Properties ~~ #
     @property
@@ -112,7 +117,7 @@ class Box(object):
     @property
     def box_br(self):
         return self._box_br
-  
+
     @property
     def shape(self):
         return self._dims
@@ -131,7 +136,7 @@ class Box(object):
         Calculates the cost bounded by the box.
         Changing to a more detailed calculation.
         """
-        return np.sum(self._data)/(self.shape[0] * self.shape[1]) ** 2
+        return np.sum(self._data) / (self.shape[0] * self.shape[1])**2
 
     @property
     def metadata(self):
@@ -178,27 +183,58 @@ class Box(object):
         Overlays a blue box on the image provided (note, not on own
         image).
         Args:
-            image: np.array of the image that the box is to be drawn
-                   on.
+            image: np.array or PIL.Image.Image of the image that the
+            box is to be drawn on.
         Returns:
             img_with_overlay: The image with the overlaid box.
         Raises:
        
         """
-        # check if image is colour or greyscale
-        if len(image.shape) == 2:
-            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
         # define tuples for cv2.rectangle
         colour = (255, 0, 0)
         # cv2.rectangle requires corner co-ordinates to be in (x,y) not (i,j)
         # so indices are flipped.
-        tl_tuple = tuple(np.flip(self._box_tl, 0))
+        tl_tuple = tuple(np.flip(self.box_tl, 0))
         br_tuple = tuple(np.flip(self.box_br, 0))
 
-        img_with_overlay = copy.copy(image)
-        cv2.rectangle(img_with_overlay, tl_tuple, br_tuple, colour, 3)
-        return img_with_overlay
+        # Handle CV images
+        if isinstance(image, np.ndarray):
+            # copy image
+            img_with_overlay = copy.copy(image)
+            # check if image is colour or greyscale
+            if len(image.shape) == 2:
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+            # get stroke width from image dimensions
+            stroke_width = utilities.estimate_stroke_width(
+                img_with_overlay.shape)
+            # draw rectangle
+            cv2.rectangle(img_with_overlay, tl_tuple, br_tuple, colour,
+                          stroke_width)
+            """
+            cv2.namedWindow("cv2", cv2.WINDOW_NORMAL)        # Create a named window
+            cv2.moveWindow("cv2", 40, 30)  # Move it to (40,30)
+            cv2.imshow("cv2", img_with_overlay)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            """
+            return img_with_overlay
+
+        # Handle PIL images
+        elif isinstance(image, PIL.Image.Image):
+            # copy image
+            img_with_overlay = copy.copy(image)
+            # dims are reversed to conform with PIL.ImageDraw.Draw.rectangle() [xy not ij]
+            dims = ((self.box_br[1], self.box_br[0]), (self.box_tl[1],
+                                                       self.box_tl[0]))
+            # get stroke width from image dimensions
+            stroke_width = utilities.estimate_stroke_width(
+                img_with_overlay.size)
+            # instantiate Draw context
+            shape_writer = PIL.ImageDraw.Draw(img_with_overlay)
+            shape_writer.rectangle(dims, outline=colour, width=stroke_width)
+            #img_with_overlay.show()
+            return img_with_overlay
 
     def playback_history(self, image, save_path):
         """
@@ -211,17 +247,17 @@ class Box(object):
         """
         # set up save path and temporary box object
 
-
         ### This should be uncommented if the file should be named as box_id
         # ##save_path = save_path + "/" + str(self._metadata.box_id) + ".avi"
 
-
-        temp_box = Box(self.s_map, self._metadata.starting_box_tl, self._metadata.starting_dims, self._min_size)
+        temp_box = Box(self.s_map, self._metadata.starting_box_tl,
+                       self._metadata.starting_dims, self._min_size)
         print("Saving video to : ", save_path)
         # initialise writer
         cv2.VideoWriter_fourcc(*'X264')
-        writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'X264'), 1., (image.shape[1], image.shape[0]))
-        
+        writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'X264'),
+                                 1., (image.shape[1], image.shape[0]))
+
         # add starting position image
         for _ in range(3):
             writer.write(temp_box.overlay_box(image))
@@ -232,7 +268,7 @@ class Box(object):
         # write end image for padding
         for _ in range(3):
             writer.write(temp_box.overlay_box(image))
-        
+
         writer.release()
 
     def write_to_file(self, folderpath, imagepath, video_ext=".avi"):
@@ -246,10 +282,12 @@ class Box(object):
         else:
             request_name = ""
         # build the file names
+        # yapf: disable
         outimg_path = folderpath / Path("boxed_" + request_name + str(image_name) + str(imagepath.suffix))
         outsmap_path = folderpath / Path("boxed_smap_" + request_name + str(image_name) + str(imagepath.suffix))
         outvid_path = folderpath / Path("history_" + request_name + str(image_name) + video_ext)
         metafile_path = folderpath / Path("metadata_" + request_name + str(image_name) + ".txt")
+        # yapf: enable
 
         # load image
         image = cv2.imread(str(imagepath))
@@ -268,13 +306,17 @@ class Box(object):
         writefile.write(str(self.metadata.__dict__))
         writefile.close()
 
-        
 
 # ========================= /class ========================
 
 import copy
 import sys
-def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=10000):
+
+
+def minimise_cost(starting_box,
+                  directions_list,
+                  step_size=10,
+                  n_iterations=10000):
     """
     Minimises the cost defined by the box class by exploring
     the saliency map space stored in the box.
@@ -294,8 +336,8 @@ def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=1000
     Raises:
         
     """
-    
-    optimum_box = starting_box
+
+    optimum_box = copy.copy(starting_box)
     # loop over n iterations. Each iteration consists of constructing
     # boxes by moving the current box according to each direction in
     # direction list. The costs and corresponding direction is recorded
@@ -316,26 +358,27 @@ def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=1000
             except ValueError:
                 # skip invalid boxes
                 continue
-            
+
             # check that box is valid
             # print(candidate_box.data)
             candidate_vectors.append(vector)
             candidate_costs.append(candidate_box.cost)
 
         # now we need to select the best candidate
-        
+
         best_cost = min(candidate_costs)
         best_vector = candidate_vectors[candidate_costs.index(best_cost)]
         # add best cost to list of cost histories
         optimum_box.metadata.cost_history.append(best_cost)
         optimum_box.metadata.n_transformations += 1
         # check if best_vector is "no step made"
-        if np.all(best_vector==0):
+        if np.all(best_vector == 0):
             print("Minimum found after", iteration + 1, "iterations")
             break
 
         # apply best transformation vector to optimum_box
-        optimum_box.transform(step_size * best_vector, record_transformation=True)
+        optimum_box.transform(
+            step_size * best_vector, record_transformation=True)
         #print("Box ID: ", optimum_box.metadata.box_id)
         #print(best_vector)
         #print(best_cost)
@@ -343,25 +386,34 @@ def minimise_cost(starting_box, directions_list, step_size=10, n_iterations=1000
     return optimum_box
 
 
-import directions_factory
-if __name__ == "__main__":
+def main():
     """
     For testing only.
     """
     # load image
-    image = cv2.imread("../mphys-testing/images/birds_salience_map.jpg", 0)
+    image = cv2.imread(
+        r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S7\MPhys\test_images\delpotro.jpg',
+        0)
     y = image.shape[0]
     x = image.shape[1]
-    starting_box = Box(image, np.array([220, 440]), np.array([100, 100]), np.array([60, 60]))
-    print(starting_box.box_br)
+    starting_box = Box(image, np.array([220, 440]), np.array([100, 100]),
+                       np.array([60, 60]))
+
+    # print(starting_box.box_br)
     directions_list = directions_factory.unconstrained()
 
     lowest_cost_box = minimise_cost(starting_box, directions_list, 50, 70)
-    
-    lowest_cost_box.write_to_file(Path("../mphys-testing/images/output/testingwrite/"), Path("../mphys-testing/images/birds.jpg"))
-   
-   # cv2.imshow("box", lowest_cost_box.overlay_box(image))
-   # print(lowest_cost_box._metadata.history)
 
-   # lowest_cost_box.playback_history(cv2.imread("../mphys-testing/images/birds.jpg", 0), '../mphys-testing/salience-in-photographs/images/output')
-   # cv2.waitKey(0)
+    print(type(image))
+
+
+# lowest_cost_box.write_to_file(Path("../mphys-testing/images/output/testingwrite/"), Path("../mphys-testing/images/birds.jpg"))
+
+# cv2.imshow("box", lowest_cost_box.overlay_box(image))
+# print(lowest_cost_box._metadata.history)
+
+# lowest_cost_box.playback_history(cv2.imread("../mphys-testing/images/birds.jpg", 0), '../mphys-testing/salience-in-photographs/images/output')
+# cv2.waitKey(0)
+
+if __name__ == "__main__":
+    main()

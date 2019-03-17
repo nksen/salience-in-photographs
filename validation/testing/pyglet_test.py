@@ -2,7 +2,7 @@
 --Naim Sen--
 --Toby Ticehurst--
 
-test.py
+pyglet_test.py
 
 Testing pyglet for displaying images to participants.
 """

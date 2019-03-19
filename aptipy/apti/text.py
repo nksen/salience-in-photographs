@@ -195,13 +195,13 @@ def main():
     s_map = preprocessing.generate_saliency_map(raw_img)
 
     init_box = Box(s_map, np.array([0, 0]), np.array([700, 300]))
-    #text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]), np.array([500, 800]))
+    text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]), np.array([500, 800]))
     #drawn_box = Box(s_map, np.array([500, 0]), np.array([1150, 800]))
     directions_list = directions_factory.unconstrained()
     #text_box = minimise_cost(init_box, directions_list)
 
     raw = r"Andy Murray: Former Wimbledon champion is |pain free| after hip injury."
-    fontpath = PurePath(r'../assets/BBCReithSans_Bd.ttf')
+    fontpath = PurePath(r'../assets/BBCReith/BBCReithSans_Bd.ttf')
     text_context = Text(raw, fontpath, size_pt=24)
     text_context.rescale_font_size(pil_img.size)
 

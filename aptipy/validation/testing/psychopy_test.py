@@ -1,6 +1,5 @@
 """
 --Naim Sen--
---Toby Ticehurst--
 
 test.py
 psychopy_test.py
@@ -18,6 +17,8 @@ mywin = visual.Window(
 grating = visual.GratingStim(
     win=mywin, mask="circle", size=1080, pos=[-4, 0], sf=3)
 fixation = visual.GratingStim(win=mywin, size=1080, pos=[0, 0], sf=0)
+
+image=visua
 
 #draw the stimuli and update the window
 grating.draw()

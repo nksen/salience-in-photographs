@@ -1,6 +1,5 @@
 """
 --Naim Sen--
---Toby Ticehurst--
 
 pyglet_test.py
 

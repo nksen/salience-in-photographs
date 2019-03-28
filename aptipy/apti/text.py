@@ -5,6 +5,10 @@
 text.py
 
 Contains text class
+
+Copyright © 2018, Naim Sen
+Licensed under the terms of the GNU General Public License
+<https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
 from pathlib import PurePath
@@ -195,7 +199,8 @@ def main():
     s_map = preprocessing.generate_saliency_map(raw_img)
 
     init_box = Box(s_map, np.array([0, 0]), np.array([700, 300]))
-    text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]), np.array([500, 800]))
+    text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]),
+                   np.array([500, 800]))
     #drawn_box = Box(s_map, np.array([500, 0]), np.array([1150, 800]))
     directions_list = directions_factory.unconstrained()
     #text_box = minimise_cost(init_box, directions_list)

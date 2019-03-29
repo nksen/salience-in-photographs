@@ -4,7 +4,7 @@ Mar 2019
 
 scraper.py
 
-Scraper class for going grabbing headlines from
+Scraper class for grabbing headlines from
 an associated URL.
 
 Copyright © 2018, Naim Sen
@@ -14,10 +14,10 @@ Licensed under the terms of the GNU General Public License
 
 import re
 import json
-import requests
 import datetime
-
 from pathlib import Path
+
+import requests
 from bs4 import BeautifulSoup as bs
 
 
@@ -36,15 +36,17 @@ class Scraper(object):
         self._soup = bs(response.text, 'html.parser')
         self._save_path = Path(save_path)
         self._base_url = base_url
+        self.output = []
 
     def grab_headlines(self):
         """
+        Gets headlines from base_url by searching for 'h3' with class attrs 
+        .+?heading__title.
         """
         # get relevent html elements
         element_list = self._soup.find_all(
             'h3', attrs={'class': re.compile('.+?heading__title')})
         # loop over each headline and construct a list of dicts
-        self.output = []
         for item in element_list:
             output_element = {}
             output_element['headline'] = str(item.get_text())
@@ -58,14 +60,16 @@ class Scraper(object):
         """
         # check if file exists and read
         try:
-            with open(str(self._save_path.resolve()), 'r') as file:
+            with self._save_path.open(mode='r') as file:
                 existing_data = json.load(file)
-                writeout = existing_data.append(self.output)
+                print(type(existing_data))
+                #exit()
+                writeout = existing_data + self.output
         except FileNotFoundError:
             writeout = self.output
 
         # write to file
-        with open(str(self._save_path.resolve()), 'w') as file:
+        with self._save_path.open(mode='w') as file:
             json.dump(writeout, file)
 
 

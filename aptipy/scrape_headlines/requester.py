@@ -11,6 +11,7 @@ Licensed under the terms of the GNU General Public License
 <https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 import json
+import random
 from pathlib import Path
 
 
@@ -40,10 +41,31 @@ class Requester(object):
             item['headline'] for item in self._file_contents
             if 'headline' in item
         ]
+        # list of served indices
+        self._served_indices = []
+
+    def get(self, index=None):
+        """
+        Get headline (leave index none for a random selection)
+        """
+        # get headline from index
+        if index is not None:
+            item = self._headlines[index]
+            self._served_indices.append(index)
+            return item
+        # get random headline
+        else:
+            random.seed()
+            # get random headline index
+            rand_index = random.randint(0, len(self._headlines) - 1)
+            self._served_indices.append(rand_index)
+            return (self._headlines[rand_index], rand_index)
 
 
 def main():
-    Requester()
+    headline_server = Requester()
+    out, idx = headline_server.get()
+    print(idx, out)
 
 
 if __name__ == '__main__':

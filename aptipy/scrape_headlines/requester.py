@@ -12,7 +12,8 @@ Licensed under the terms of the GNU General Public License
 """
 import json
 import random
-from pathlib import Path
+from pathlib import Path, PurePath
+from ..apti.text import Text
 
 
 class Requester(object):
@@ -62,10 +63,36 @@ class Requester(object):
             return (self._headlines[rand_index], rand_index)
 
 
+def get_constraints(headline, text_context):
+    """
+    Gets minimum box height and width from string
+    """
+    # get height and width limits
+    longest_word = ''
+    lw_width = 0
+    # loop over headline and measure each word
+    for word in headline.split():
+        w_width, w_height = text_context.get_text_size(word)
+        if w_width > lw_width:
+            longest_word = word
+            lw_width = w_width
+    # measure longest word using Text object
+    min_width = lw_widt
+
+    return min_width, min_height
+
+
 def main():
     headline_server = Requester()
-    out, idx = headline_server.get()
-    print(idx, out)
+    hl, idx = headline_server.get()
+    print(idx, hl)
+
+    # text context needed for getting constraints
+    fontpath = PurePath(r'../assets/BBCReith/BBCReithSans_Bd.ttf')
+    text_ctx = Text('raw', fontpath, size_pt=24)
+    # get constrainst
+    vals = get_constraints(hl, text_ctx)
+    print(vals)
 
 
 if __name__ == '__main__':

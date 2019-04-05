@@ -18,12 +18,10 @@ import time
 
 import numpy as np
 import cv2
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
-from bounding_box import Box, minimise_cost
-import directions_factory
-import preprocessing
-import utilities
+from .bounding_box import Box, minimise_cost
+from ..apti import directions_factory, preprocessing, utilities
 
 # TODO: Procedural colour if necessary?
 BBC_YELLOW = (255, 210, 47)
@@ -84,7 +82,6 @@ class Text(object):
     def __str__(self):
         return self._raw_text
 
-    # ~~ properties ~~ #
     def rescale_font_size(self,
                           original_image_dims,
                           target_image_size=5,
@@ -107,7 +104,7 @@ class Text(object):
         if isinstance(target_image_size, int):
             # original divide target: scaling factor
             scale_factor = original_diagonal / target_image_size
-        # or passed as a tuple dimensions (shape) pair
+        # ...or passed as a tuple dimensions (shape) pair
         elif isinstance(target_image_size, tuple):
             target_diagonal = sqrt(
                 pow(target_image_size[0], 2) + pow(target_image_size[1], 2))
@@ -118,7 +115,13 @@ class Text(object):
         self._desired_font_size = self._font_size
         self._font_size = scaled_size_pt
 
-    # ~~ methods ~~ #
+    def get_text_size(self, text):
+        """
+        Passthrough function for PIL.ImageFont.getsize()
+        """
+        font = ImageFont.truetype(str(self._font_path), self._font_size)
+        return font.getsize(text)
+
     def draw(self, text_box, raw_img):
         """
         Draws text on the image provided given a constraining box shape

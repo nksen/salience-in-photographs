@@ -55,29 +55,29 @@ class ImageText(object):
     """
 
     def __init__(self,
-                 filename_or_size,
+                 image_or_size,
                  mode='RGBA',
                  background=(0, 0, 0, 0),
                  encoding='utf8'):
-        # check whether filename_or_size is a filename or a size tuple
-        if isinstance(filename_or_size, str):
-            self.filename = filename_or_size
+        # check whether image_or_size is a filename or a size tuple
+        if isinstance(image_or_size, str):
+            self.filename = image_or_size
             self.image = Image.open(self.filename)
             self.size = self.image.size
-        elif isinstance(filename_or_size, (list, tuple)):
-            self.size = filename_or_size
+        elif isinstance(image_or_size, (list, tuple)):
+            self.size = image_or_size
             self.image = Image.new(mode, self.size, color=background)
             self.filename = None
         #>>>> Added by Naim Sen
-        elif isinstance(filename_or_size, PIL.Image.Image):
-            self.image = filename_or_size
+        elif isinstance(image_or_size, PIL.Image.Image):
+            self.image = image_or_size
             self.size = self.image.size
             self.filename = self.image.filename if hasattr(
                 self.image, 'filename') else None
         #<<<<
         else:
-            raise TypeError("ImageText __init__() : invalid filename_or_size type. %s" %\
-                            type(filename_or_size))
+            raise TypeError("ImageText __init__() : invalid image_or_size type. %s" %\
+                            type(image_or_size))
         # open PIL image for drawing
         self.draw = ImageDraw.Draw(self.image)
         self.encoding = encoding

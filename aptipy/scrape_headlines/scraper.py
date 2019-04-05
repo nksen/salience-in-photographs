@@ -62,8 +62,6 @@ class Scraper(object):
         try:
             with self._save_path.open(mode='r') as file:
                 existing_data = json.load(file)
-                print(type(existing_data))
-                #exit()
                 writeout = existing_data + self.output
         except FileNotFoundError:
             writeout = self.output

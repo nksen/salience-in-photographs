@@ -4,8 +4,7 @@ Mar 2019
 
 scrape_headlines - main.py
 
-Grabs headlines from https://www.bbc.co.uk/sport using
-beautiful soup.
+main for testing.
 
 Copyright © 2018, Naim Sen
 Licensed under the terms of the GNU General Public License

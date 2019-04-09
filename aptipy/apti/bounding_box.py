@@ -24,8 +24,7 @@ import PIL
 import numpy as np
 
 # module imports
-import utilities
-import directions_factory
+from ..apti import utilities, directions_factory
 
 
 class Box(object):

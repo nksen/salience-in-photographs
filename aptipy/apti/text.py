@@ -5,6 +5,10 @@
 text.py
 
 Contains text class
+
+Copyright © 2018, Naim Sen
+Licensed under the terms of the GNU General Public License
+<https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
 from pathlib import PurePath
@@ -14,12 +18,10 @@ import time
 
 import numpy as np
 import cv2
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
-from bounding_box import Box, minimise_cost
-import directions_factory
-import preprocessing
-import utilities
+from .bounding_box import Box, minimise_cost
+from ..apti import directions_factory, preprocessing, utilities
 
 # TODO: Procedural colour if necessary?
 BBC_YELLOW = (255, 210, 47)
@@ -80,7 +82,6 @@ class Text(object):
     def __str__(self):
         return self._raw_text
 
-    # ~~ properties ~~ #
     def rescale_font_size(self,
                           original_image_dims,
                           target_image_size=5,
@@ -103,7 +104,7 @@ class Text(object):
         if isinstance(target_image_size, int):
             # original divide target: scaling factor
             scale_factor = original_diagonal / target_image_size
-        # or passed as a tuple dimensions (shape) pair
+        # ...or passed as a tuple dimensions (shape) pair
         elif isinstance(target_image_size, tuple):
             target_diagonal = sqrt(
                 pow(target_image_size[0], 2) + pow(target_image_size[1], 2))
@@ -114,7 +115,13 @@ class Text(object):
         self._desired_font_size = self._font_size
         self._font_size = scaled_size_pt
 
-    # ~~ methods ~~ #
+    def get_text_size(self, text):
+        """
+        Passthrough function for PIL.ImageFont.getsize()
+        """
+        font = ImageFont.truetype(str(self._font_path), self._font_size)
+        return font.getsize(text)
+
     def draw(self, text_box, raw_img):
         """
         Draws text on the image provided given a constraining box shape
@@ -180,6 +187,28 @@ class Text(object):
                                    place=self._alignment)
         return out_img
 
+def get_constraints(headline, text_context):
+    """
+    Gets minimum box height and width from string
+    """
+    # get height and width limits
+    longest_word = ''
+    lword_x = 0
+    # loop over headline and measure each word
+    for word in headline.split():
+        word_x, word_y = text_context.get_text_size(word)
+        if word_x > lword_x:
+            # save longest word and it's width
+            longest_word = word
+            lword_x = word_x
+    min_width = lword_x
+    # get area
+    line_width, line_height = text_context.get_text_size(headline)
+    
+    area = line_width * line_height
+    minimum_size = np.array([line_height, min_width])
+
+    return minimum_size, area
 
 def main():
     """
@@ -195,7 +224,8 @@ def main():
     s_map = preprocessing.generate_saliency_map(raw_img)
 
     init_box = Box(s_map, np.array([0, 0]), np.array([700, 300]))
-    text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]), np.array([500, 800]))
+    text_box = Box(s_map, np.array([raw_img.shape[0] - 501, 0]),
+                   np.array([500, 800]))
     #drawn_box = Box(s_map, np.array([500, 0]), np.array([1150, 800]))
     directions_list = directions_factory.unconstrained()
     #text_box = minimise_cost(init_box, directions_list)

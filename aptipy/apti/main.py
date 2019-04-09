@@ -4,6 +4,9 @@
 
 main.py
 
+Copyright © 2018, Naim Sen
+Licensed under the terms of the GNU General Public License
+<https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
 
 ## ==== Imports ==== ##
@@ -18,6 +21,7 @@ import bounding_box
 import directions_factory as df
 import box_factory
 
+
 def main():
     """
     main function for running the minimisation on the a test image
@@ -27,8 +31,10 @@ def main():
     parser = argparse.ArgumentParser()
     # add args
     parser.add_argument("img_path", help="path to image file", type=str)
-    parser.add_argument("-f", help="path to output", type=str)              # this argument is optional (defaults to NoneType)
-    
+    parser.add_argument(
+        "-f", help="path to output",
+        type=str)  # this argument is optional (defaults to NoneType)
+
     # grab args
     args = parser.parse_args()
     ## save path ##
@@ -39,13 +45,13 @@ def main():
         print(parent_save_path)
     else:
         parent_save_path = Path.cwd()
-    
+
     ## image path ##
     raw_img_path = Path.home() / Path(args.img_path)
     # check that image exists
     if not raw_img_path.is_file():
         raise ValueError("Invalid image file path. File does not exist.")
-    
+
     # ==== load & process image ==== #
     raw_img = cv2.imread(str(raw_img_path.resolve()))
     if raw_img is not None:
@@ -58,18 +64,12 @@ def main():
     # ==== generate boxes and directions ==== #
     factory = box_factory.BoxFactory(s_map, text=None)
     # generate requests for the factory
-    box_init_size = 0.2     # this can be expressed as an ndarray or as a fraction of image size
-    requests = [
-        ["tl", box_init_size],
-        ["tr", box_init_size],
-        ["bl", box_init_size],
-        ["br", box_init_size],
-        ["c", box_init_size],
-        ["cl", box_init_size],
-        ["cr", box_init_size],
-        ["ct", box_init_size],
-        ["cb", box_init_size]
-    ]
+    box_init_size = 0.2  # this can be expressed as an ndarray or as a fraction of image size
+    requests = [["tl", box_init_size], ["tr", box_init_size],
+                ["bl", box_init_size], ["br", box_init_size],
+                ["c", box_init_size], ["cl", box_init_size],
+                ["cr", box_init_size], ["ct", box_init_size],
+                ["cb", box_init_size]]
     box_list = factory.generate_boxes(requests_readable=requests)
     """
     # TESTING
@@ -93,7 +93,6 @@ def main():
     ]
 
     box_list = box_factory.minimise_boxes(box_list, directions)
-
     """
     for box in box_list:
         img = box.overlay_box(raw_img)
@@ -103,7 +102,6 @@ def main():
 
     # write boxes
     box_factory.write_boxes(box_list, parent_save_path, raw_img_path)
-
     """
    
     # minimise salience
@@ -118,4 +116,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

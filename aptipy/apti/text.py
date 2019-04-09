@@ -187,6 +187,28 @@ class Text(object):
                                    place=self._alignment)
         return out_img
 
+def get_constraints(headline, text_context):
+    """
+    Gets minimum box height and width from string
+    """
+    # get height and width limits
+    longest_word = ''
+    lword_x = 0
+    # loop over headline and measure each word
+    for word in headline.split():
+        word_x, word_y = text_context.get_text_size(word)
+        if word_x > lword_x:
+            # save longest word and it's width
+            longest_word = word
+            lword_x = word_x
+    min_width = lword_x
+    # get area
+    line_width, line_height = text_context.get_text_size(headline)
+    
+    area = line_width * line_height
+    minimum_size = np.array([line_height, min_width])
+
+    return minimum_size, area
 
 def main():
     """

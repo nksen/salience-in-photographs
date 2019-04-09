@@ -14,7 +14,7 @@ import json
 import random
 from pathlib import Path, PurePath
 import numpy as np
-from ..apti.text import Text
+from ..apti.text import Text, get_constraints
 
 
 class Requester(object):
@@ -64,36 +64,14 @@ class Requester(object):
             return (self._headlines[rand_index], rand_index)
 
 
-def get_constraints(headline, text_context):
-    """
-    Gets minimum box height and width from string
-    """
-    # get height and width limits
-    longest_word = ''
-    lword_x = 0
-    # loop over headline and measure each word
-    for word in headline.split():
-        word_x, word_y = text_context.get_text_size(word)
-        if word_x > lword_x:
-            # save longest word and it's width
-            longest_word = word
-            lword_x = word_x
-    min_width = lword_x
-    # get area
-    line_width, line_height = text_context.get_text_size(headline)
-    
-    area = line_width * line_height
-    minimum_size = np.array([line_height, min_width])
-
-    return minimum_size, area
-
-
 def main():
     headline_server = Requester()
     hl, idx = headline_server.get()
     print(idx, hl)
     # text context needed for getting constraints
-    fontpath = Path(r'../salience-in-photographs/aptipy/assets/BBCReith/BBCReithSans_Bd.ttf').resolve()
+    fontpath = Path(
+        r'../salience-in-photographs/aptipy/assets/BBCReith/BBCReithSans_Bd.ttf'
+    ).resolve()
     text_ctx = Text('raw', fontpath, size_pt=24)
     # get constraints
     vals = get_constraints(hl, text_ctx)
@@ -102,4 +80,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    

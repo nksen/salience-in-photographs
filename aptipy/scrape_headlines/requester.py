@@ -13,6 +13,7 @@ Licensed under the terms of the GNU General Public License
 import json
 import random
 from pathlib import Path, PurePath
+import numpy as np
 from ..apti.text import Text
 
 
@@ -69,31 +70,36 @@ def get_constraints(headline, text_context):
     """
     # get height and width limits
     longest_word = ''
-    lw_width = 0
+    lword_x = 0
     # loop over headline and measure each word
     for word in headline.split():
-        w_width, w_height = text_context.get_text_size(word)
-        if w_width > lw_width:
+        word_x, word_y = text_context.get_text_size(word)
+        if word_x > lword_x:
+            # save longest word and it's width
             longest_word = word
-            lw_width = w_width
-    # measure longest word using Text object
-    min_width = lw_widt
+            lword_x = word_x
+    min_width = lword_x
+    # get area
+    line_width, line_height = text_context.get_text_size(headline)
+    
+    area = line_width * line_height
+    minimum_size = np.array([line_height, min_width])
 
-    return min_width, min_height
+    return minimum_size, area
 
 
 def main():
     headline_server = Requester()
     hl, idx = headline_server.get()
     print(idx, hl)
-
     # text context needed for getting constraints
-    fontpath = PurePath(r'../assets/BBCReith/BBCReithSans_Bd.ttf')
+    fontpath = Path(r'../salience-in-photographs/aptipy/assets/BBCReith/BBCReithSans_Bd.ttf').resolve()
     text_ctx = Text('raw', fontpath, size_pt=24)
-    # get constrainst
+    # get constraints
     vals = get_constraints(hl, text_ctx)
     print(vals)
 
 
 if __name__ == '__main__':
     main()
+    

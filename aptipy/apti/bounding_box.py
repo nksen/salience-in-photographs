@@ -47,7 +47,12 @@ class Box(object):
                  resized.    
     """
 
-    def __init__(self, s_map, box_tl, dims, minimum_size=np.array([0, 0])):
+    def __init__(self,
+                 s_map,
+                 box_tl,
+                 dims,
+                 min_size=np.array([0, 0]),
+                 min_area=0):
         """
         Box object initialiser
         Args:
@@ -68,20 +73,24 @@ class Box(object):
             raise ValueError("Anchor point must be non-negative.")
         if any(element < 0 for element in dims):
             raise ValueError("Dimensions must be non-negative.")
-        if any(element < 0 for element in minimum_size):
+        if any(element < 0 for element in min_size):
             raise ValueError("Min size must be non-negative.")
 
-        # check that dimensions are large than minimum_size
-        if dims[0] < minimum_size[0]:
+        # check that dimensions are large than min_size
+        if dims[0] < min_size[0]:
             raise ValueError("i'th dimension is less than minimum size.")
-        if dims[1] < minimum_size[1]:
+        if dims[1] < min_size[1]:
             raise ValueError("j'th dimension is less than minimum size.")
+
+        # check if area is less than min_area
+        if dims[0] * dims[1] <= min_area:
+            raise ValueError("area must exceed minimum area")
 
         # assign vars
         self._box_tl = box_tl
         self._dims = dims
         self._s_map = s_map
-        self._min_size = minimum_size
+        self._min_size = min_size
         # compute and check box_br
         box_br = np.add(box_tl, dims)
         if box_br[0] > s_map.shape[0] or box_br[1] > s_map.shape[1]:
@@ -135,7 +144,10 @@ class Box(object):
         Calculates the cost bounded by the box.
         Changing to a more detailed calculation.
         """
-        return np.sum(self._data) / (self.shape[0] * self.shape[1])**2
+        av_density = np.sum(self._s_map) / (self._s_map.size)
+        box_density = np.sum(self._data) / (self.shape[0] * self.shape[1])
+        return box_density / (av_density)
+        #return np.sum(self._data) / (self.shape[0] * self.shape[1])**2
 
     @property
     def metadata(self):

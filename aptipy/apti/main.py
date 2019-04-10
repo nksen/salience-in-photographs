@@ -16,15 +16,15 @@ import numpy as np
 import argparse
 from pathlib import Path
 # module imports
-import preprocessing
-import bounding_box
-import directions_factory as df
-import box_factory
+from ..apti import preprocessing, bounding_box, box_factory
+from ..apti import directions_factory as df
+from ..scrape_headlines.requester import Requester
+from ..apti.text import Text
 
 
 def main():
     """
-    main function for running the minimisation on the a test image
+    main function for running the minimisation on a test image
     """
     # ==== handle user input ==== #
     # declare parser
@@ -61,10 +61,22 @@ def main():
     # process image
     s_map = preprocessing.generate_saliency_map(raw_img, to_display=True)
 
+    # ==== get a headline and measure ==== #
+    headline_server = Requester()
+    headline_raw, _ = headline_server.get()
+
+    fontpath = Path(
+        r'../salience-in-photographs/aptipy/assets/BBCReith/BBCReithSans_Bd.ttf'
+    )
+    text_ctx = Text(headline_raw, fontpath.resolve())
+    text_ctx.rescale_font_size(s_map.shape)
+    min_sizes, min_area = text_ctx.get_constraints(headline_raw)
+
     # ==== generate boxes and directions ==== #
-    factory = box_factory.BoxFactory(s_map, text=None)
+    factory = box_factory.BoxFactory(s_map, min_sizes, min_area)
+    #actory = box_factory.BoxFactory(s_map)
     # generate requests for the factory
-    box_init_size = 0.2  # this can be expressed as an ndarray or as a fraction of image size
+    box_init_size = 0.3  # this can be expressed as an ndarray or as a fraction of image size
     requests = [["tl", box_init_size], ["tr", box_init_size],
                 ["bl", box_init_size], ["br", box_init_size],
                 ["c", box_init_size], ["cl", box_init_size],

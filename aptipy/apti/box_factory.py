@@ -24,7 +24,8 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 from pathlib import Path
 # module imports
-import bounding_box
+from ..apti import bounding_box
+
 
 class BoxFactory(object):
     """
@@ -32,14 +33,12 @@ class BoxFactory(object):
     box. Should be able to create multiple boxes .
     """
 
-    def __init__(self, s_map, text=None):
+    def __init__(self, s_map, min_size=np.array([0, 0]), min_area=0):
         self._s_map = s_map
         # initialise requests list
         self._requests_list = None
-        if text is None:
-            self._min_size = np.array([0, 0])
-#        else:
-#            self._min_size = text.smallest_width()
+        self._min_size = min_size
+        self._min_area = min_area
 
     # ~~ Properties ~~ #
     @property
@@ -62,8 +61,9 @@ class BoxFactory(object):
             #"centre top",
             "ct",
             #"centre bottom",
-            "cb"      
-            ] 
+            "cb"
+        ]
+
     def translate_request(self, request_readable):
         """
         Translates a single request
@@ -82,7 +82,8 @@ class BoxFactory(object):
             box_dims = box_dims * img_shape
             box_dims = box_dims.astype(int)
         else:
-            raise AssertionError("Invalid request: dimensions must be either float or ndarray")
+            raise AssertionError(
+                "Invalid request: dimensions must be either float or ndarray")
 
         # account for all template locations
         if pos_readable == "tl":
@@ -98,30 +99,30 @@ class BoxFactory(object):
             i = img_shape[0] - box_dims[0]
             j = img_shape[1] - box_dims[1]
         elif pos_readable == "c":
-            i = int(img_shape[0]/2) - int(box_dims[0]/2)
-            j = int(img_shape[1]/2) - int(box_dims[1]/2)
+            i = int(img_shape[0] / 2) - int(box_dims[0] / 2)
+            j = int(img_shape[1] / 2) - int(box_dims[1] / 2)
         elif pos_readable == "cl":
-            i = int(img_shape[0]/2) - int(box_dims[0]/2)
+            i = int(img_shape[0] / 2) - int(box_dims[0] / 2)
             j = 0
         elif pos_readable == "cr":
-            i = int(img_shape[0]/2) - int(box_dims[0]/2)
+            i = int(img_shape[0] / 2) - int(box_dims[0] / 2)
             j = img_shape[1] - box_dims[1]
         elif pos_readable == "ct":
             i = 0
-            j = int(img_shape[1]/2) - int(box_dims[1]/2)
+            j = int(img_shape[1] / 2) - int(box_dims[1] / 2)
         elif pos_readable == "cb":
             i = img_shape[0] - box_dims[0]
-            j = int(img_shape[1]/2) - int(box_dims[1]/2)
+            j = int(img_shape[1] / 2) - int(box_dims[1] / 2)
         else:
             if isinstance(pos_readable, str):
                 raise ValueError("Invalid request.")
             else:
-                raise AssertionError("Invalid request: position must be str instance.")
+                raise AssertionError(
+                    "Invalid request: position must be str instance.")
         # construct position array
-        pos = np.array([i,j])
+        pos = np.array([i, j])
 
         return [pos, box_dims]
-        
 
     def load_requests(self, requests_readable):
         """
@@ -153,29 +154,38 @@ class BoxFactory(object):
         for index, request in enumerate(self._requests_list):
             box_tl = request[0]
             box_dims = request[1]
-            box = bounding_box.Box(self._s_map, box_tl, box_dims, self._min_size)
+            box = bounding_box.Box(self._s_map, box_tl, box_dims,
+                                   self._min_size, self._min_area)
             # add request metadata
             box.metadata.construction_request = requests_readable[index]
             boxes_list.append(box)
         return boxes_list
 
-def minimise_boxes(boxes_list, directions_lists, step_size=10, n_iterations=10000):
+
+def minimise_boxes(boxes_list,
+                   directions_lists,
+                   step_size=10,
+                   n_iterations=10000):
     """
     Utilises multiprocessing.Pool to minimise multiple boxes simultaneously. 
     num workers is cpu_count - 1 to prevent complete CPU lockup.
     """
     # check if step size is a list or int
-    # if int, make into list of ints so it can be passed to starmap   
+    # if int, make into list of ints so it can be passed to starmap
     if isinstance(step_size, int):
-        step_size = [step_size]*len(boxes_list)
+        step_size = [step_size] * len(boxes_list)
     elif not isinstance(step_size, list):
-        raise ValueError("minimise_boxes: step size should be int or list with length == len(boxes_list)")
+        raise ValueError(
+            "minimise_boxes: step size should be int or list with length == len(boxes_list)"
+        )
 
     # same check with n_iterations
     if isinstance(n_iterations, int):
-        n_iterations = [n_iterations]*len(boxes_list)
+        n_iterations = [n_iterations] * len(boxes_list)
     elif not isinstance(n_iterations, list):
-        raise ValueError("minimise_boxes: n iterations should be int or list with length == len(boxes_list)")
+        raise ValueError(
+            "minimise_boxes: n iterations should be int or list with length == len(boxes_list)"
+        )
 
     # make ndarray of list sizes and check that they're the same
     lengths = np.array([
@@ -187,7 +197,8 @@ def minimise_boxes(boxes_list, directions_lists, step_size=10, n_iterations=1000
 
     if not np.all(lengths == lengths[0]):
         print(lengths)
-        raise ValueError("minimise_boxes: argument arrays must have equal lengths.")
+        raise ValueError(
+            "minimise_boxes: argument arrays must have equal lengths.")
 
     # repack boxes_list directions_lists step_size and n_iterations into an iterable
     # such that: [(1,2), (3,4)] -> [func(1,2), func(3,4)]
@@ -209,6 +220,7 @@ def minimise_boxes(boxes_list, directions_lists, step_size=10, n_iterations=1000
 
     return optimum_boxes
 
+
 def write_boxes(boxes_list, folderpath, imagepath):
     """
     Saves a list of boxes to the folder specified by folderpath.
@@ -221,7 +233,8 @@ def write_boxes(boxes_list, folderpath, imagepath):
     # create top level directory
     parent_path = folderpath / Path(imagepath.stem)
     if parent_path.is_dir():
-        raise ValueError("write_boxes: directory ", str(parent_path), " exists")
+        raise ValueError("write_boxes: directory ", str(parent_path),
+                         " exists")
     parent_path.resolve().mkdir()
 
     # loop over boxes
@@ -233,21 +246,18 @@ def write_boxes(boxes_list, folderpath, imagepath):
             box_path = parent_path / Path(box.metadata.construction_request[0])
         # make box directory
         if box_path.is_dir():
-            raise ValueError("write_boxes: directory ", str(box_path), " exists")
+            raise ValueError("write_boxes: directory ", str(box_path),
+                             " exists")
         box_path.mkdir()
         # write box data to file
         box.write_to_file(box_path, imagepath)
 
-    
 
 if __name__ == "__main__":
     image = cv2.imread("../mphys-testing/images/footballer.jpg", 0)
-    requests = [["br", 0.2],
-                ["tl", 0.5]
-                ]
+    requests = [["br", 0.2], ["tl", 0.5]]
     factory = BoxFactory(image)
     boxes = factory.generate_boxes(requests)
     outimg = boxes[1].overlay_box(image)
     cv2.imshow("outimg", outimg)
     cv2.waitKey(0)
-

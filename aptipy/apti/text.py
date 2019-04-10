@@ -92,7 +92,7 @@ class Text(object):
         the high-res original: font size must be increased in order to
         be drawn at the correct size for the small image size.
         Args:
-            target_font_size: font size in pt for the target scale.
+            original_image_dims: image dims in pixels (i,j) OR (x,y) agnostic
             target_image_size: tuple (dimensions in inches) or int (diagonal in inches).
             target_dpi: desired resolution in DPI (px/inch).
         returns:
@@ -121,6 +121,31 @@ class Text(object):
         """
         font = ImageFont.truetype(str(self._font_path), self._font_size)
         return font.getsize(text)
+
+    def get_constraints(self, headline=None):
+        """
+        Gets minimum box height, width, and area from string
+        """
+        if headline is None:
+            headline = self._raw_text
+        # get height and width limits
+        longest_word = ''
+        lword_x = 0
+        # loop over headline and measure each word
+        for word in headline.split():
+            word_x, word_y = self.get_text_size(word)
+            if word_x > lword_x:
+                # save longest word and it's width
+                longest_word = word
+                lword_x = word_x
+        min_width = lword_x
+        # get area
+        line_width, line_height = self.get_text_size(headline)
+
+        area = line_width * line_height
+        minimum_size = np.array([line_height, min_width])
+
+        return minimum_size, area
 
     def draw(self, text_box, raw_img):
         """
@@ -187,28 +212,6 @@ class Text(object):
                                    place=self._alignment)
         return out_img
 
-def get_constraints(headline, text_context):
-    """
-    Gets minimum box height and width from string
-    """
-    # get height and width limits
-    longest_word = ''
-    lword_x = 0
-    # loop over headline and measure each word
-    for word in headline.split():
-        word_x, word_y = text_context.get_text_size(word)
-        if word_x > lword_x:
-            # save longest word and it's width
-            longest_word = word
-            lword_x = word_x
-    min_width = lword_x
-    # get area
-    line_width, line_height = text_context.get_text_size(headline)
-    
-    area = line_width * line_height
-    minimum_size = np.array([line_height, min_width])
-
-    return minimum_size, area
 
 def main():
     """

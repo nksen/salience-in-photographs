@@ -14,7 +14,7 @@ import json
 import random
 from pathlib import Path, PurePath
 import numpy as np
-from ..apti.text import Text, get_constraints
+from ..apti.text import Text
 
 
 class Requester(object):
@@ -74,7 +74,7 @@ def main():
     ).resolve()
     text_ctx = Text('raw', fontpath, size_pt=24)
     # get constraints
-    vals = get_constraints(hl, text_ctx)
+    vals = text_ctx.get_constraints(hl)
     print(vals)
 
 

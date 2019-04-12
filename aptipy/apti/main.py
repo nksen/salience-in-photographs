@@ -74,7 +74,7 @@ def main():
 
     # ==== generate boxes and directions ==== #
     factory = box_factory.BoxFactory(s_map, min_sizes, min_area)
-    #actory = box_factory.BoxFactory(s_map)
+    #factory = box_factory.BoxFactory(s_map)
     # generate requests for the factory
     box_init_size = 0.3  # this can be expressed as an ndarray or as a fraction of image size
     requests = [["tl", box_init_size], ["tr", box_init_size],
@@ -113,7 +113,8 @@ def main():
     """
 
     # write boxes
-    box_factory.write_boxes(box_list, parent_save_path, raw_img_path)
+    box_factory.write_boxes(
+        box_list, parent_save_path, raw_img_path, headline=text_ctx)
     """
    
     # minimise salience

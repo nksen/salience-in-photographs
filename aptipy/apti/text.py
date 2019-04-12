@@ -147,14 +147,10 @@ class Text(object):
 
         return minimum_size, area
 
-    def draw(self, text_box, raw_img):
+    def draw(self, raw_img, box_tl, box_br, box_shape):
         """
         Draws text on the image provided given a constraining box shape
         """
-        # grab useful bits from the box
-        box_tl = text_box.box_tl
-        box_br = text_box.box_br
-        box_shape = text_box.shape
         # account for padding
         padding_size = utilities.estimate_stroke_width(raw_img.size)
 
@@ -193,7 +189,7 @@ class Text(object):
         scrim_br = (text_tl[1] + text_xy[0] + padding_size,
                     text_tl[0] + text_xy[1] + padding_size)
         # check if scrim exceeds image dimensions
-        if scrim_br[0] < raw_img.size[0] or scrim_br[1] < raw_img.size[1]:
+        if scrim_br[0] > raw_img.size[0] or scrim_br[1] > raw_img.size[1]:
             print("WARN: Text drawn out of bounds.")
         # draw scrim
         out_img = composite_draw((scrim_tl, scrim_br),
@@ -240,7 +236,8 @@ def main():
 
     #exit()
 
-    pil_out = text_context.draw(text_box, pil_img)
+    pil_out = text_context.draw(pil_img, text_box.box_tl, text_box.box_br,
+                                text_box.shape)
     pil_out = init_box.overlay_box(pil_out)
     """
     cv_out = text_box.overlay_box(raw_img)

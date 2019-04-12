@@ -8,7 +8,7 @@ bounding_box.py
 
 Box class and accompanying functions.
 
-Copyright © 2018, Naim Sen 
+Copyright © 2018, Naim Sen
 Licensed under the terms of the GNU General Public License
 <https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
@@ -44,7 +44,7 @@ class Box(object):
                  to be drawn over.
         data   : Segment of the image matrix that is covered by the
                  box. This is updated if the box is translated or
-                 resized.    
+                 resized.
     """
 
     def __init__(self,
@@ -131,6 +131,10 @@ class Box(object):
         return self._dims
 
     @property
+    def size(self):
+        return self._dims[0] * self._dims[1]
+
+    @property
     def data(self):
         return self._data
 
@@ -146,7 +150,10 @@ class Box(object):
         """
         av_density = np.sum(self._s_map) / (self._s_map.size)
         box_density = np.sum(self._data) / (self.shape[0] * self.shape[1])
-        return box_density / (av_density)
+        cost_val = (box_density / av_density) + (
+            (self._s_map.size - self.size) / self._s_map.size)
+
+        return cost_val
         #return np.sum(self._data) / (self.shape[0] * self.shape[1])**2
 
     @property
@@ -199,7 +206,6 @@ class Box(object):
         Returns:
             img_with_overlay: The image with the overlaid box.
         Raises:
-       
         """
 
         # define tuples for cv2.rectangle
@@ -282,7 +288,11 @@ class Box(object):
 
         writer.release()
 
-    def write_to_file(self, folderpath, imagepath, video_ext=".avi"):
+    def write_to_file(self,
+                      folderpath,
+                      imagepath,
+                      headline=None,
+                      video_ext=".avi"):
         """
         Writes box + video + metadata to folderpath
         """
@@ -302,6 +312,16 @@ class Box(object):
 
         # load image
         image = cv2.imread(str(imagepath))
+
+        if headline is not None:
+            pil_image = PIL.Image.open(imagepath)
+            # write headline on image and save
+            outhl_path = folderpath / Path("headline_" + request_name +
+                                           str(image_name) + ".png")
+            outhl = headline.draw(pil_image, self.box_tl, self.box_br,
+                                  self.shape)
+            outhl.save(outhl_path)
+
         # write box image
         outimg = self.overlay_box(image)
         cv2.imwrite(str(outimg_path), outimg)
@@ -310,7 +330,7 @@ class Box(object):
         cv2.imwrite(str(outsmap_path), outsmap)
 
         # write video
-        self.playback_history(image, str(outvid_path))
+        #self.playback_history(image, str(outvid_path))
 
         # write metadata
         writefile = open(metafile_path, "w+")
@@ -319,9 +339,6 @@ class Box(object):
 
 
 # ========================= /class ========================
-
-import copy
-import sys
 
 
 def minimise_cost(starting_box,

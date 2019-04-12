@@ -221,7 +221,7 @@ def minimise_boxes(boxes_list,
     return optimum_boxes
 
 
-def write_boxes(boxes_list, folderpath, imagepath):
+def write_boxes(boxes_list, folderpath, imagepath, headline=None):
     """
     Saves a list of boxes to the folder specified by folderpath.
     Directory structure is created:
@@ -250,7 +250,7 @@ def write_boxes(boxes_list, folderpath, imagepath):
                              " exists")
         box_path.mkdir()
         # write box data to file
-        box.write_to_file(box_path, imagepath)
+        box.write_to_file(box_path, imagepath, headline=headline)
 
 
 if __name__ == "__main__":

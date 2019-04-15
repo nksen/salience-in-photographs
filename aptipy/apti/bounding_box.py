@@ -152,10 +152,10 @@ class Box(object):
         Changing to a more detailed calculation.
         """
         av_density = np.sum(self._s_map) / (self._s_map.size)
-        box_density = np.sum(self._data) / (self.shape[0] * self.shape[1])
-        cost_val = (box_density / av_density) + (
-            (self._s_map.size - self.size) / self._s_map.size)
-
+        box_density = np.sum(self._data) / (self.size)
+        #cost_val = (box_density / av_density) + np.sqrt(
+        #        (self._s_map.size - self.size) / self._s_map.size)
+        cost_val = box_density / av_density
         return cost_val
         #return np.sum(self._data) / (self.shape[0] * self.shape[1])**2
 

@@ -63,8 +63,8 @@ def main():
 
     # ==== get a headline and measure ==== #
     headline_server = Requester()
-    headline_raw, _ = headline_server.get()
-    print("HL: ", headline_raw)
+    headline_raw, headline_idx = headline_server.get(312)
+    print("HL ", headline_idx, ": ", headline_raw)
 
     fontpath = Path(
         r'../salience-in-photographs/aptipy/assets/BBCReith/BBCReithSans_Bd.ttf'

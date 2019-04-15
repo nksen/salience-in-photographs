@@ -54,7 +54,7 @@ class Requester(object):
         if index is not None:
             item = self._headlines[index]
             self._served_indices.append(index)
-            return item
+            return item, index
         # get random headline
         else:
             random.seed()

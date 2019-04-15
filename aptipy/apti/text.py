@@ -186,7 +186,7 @@ class Text(object):
             color=self._colour,
             place=self._alignment)
         # add padding
-        scrim_tl = (text_tl[1] - padding_size, text_tl[0])
+        scrim_tl = (text_tl[1] - padding_size, text_tl[0] - padding_size)
         scrim_br = (text_tl[1] + text_xy[0] + padding_size,
                     text_tl[0] + text_xy[1] + padding_size)
         # check if scrim exceeds image dimensions

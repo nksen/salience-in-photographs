@@ -120,7 +120,8 @@ class Text(object):
         Passthrough function for PIL.ImageFont.getsize()
         """
         font = ImageFont.truetype(str(self._font_path), self._font_size)
-        return font.getsize(text)
+        size = font.getsize(text)
+        return size
 
     def get_constraints(self, headline=None):
         """
@@ -206,7 +207,7 @@ class Text(object):
                                    font_size=self._font_size,
                                    color=self._colour,
                                    place=self._alignment)
-        return out_img
+        return out_img, scrim_tl, scrim_br
 
 
 def main():

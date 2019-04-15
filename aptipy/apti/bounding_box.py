@@ -16,6 +16,7 @@ Licensed under the terms of the GNU General Public License
 # std imports
 import os
 import copy
+import pickle
 import binascii
 from pathlib import Path
 
@@ -109,13 +110,15 @@ class Box(object):
         # declare metadata Bunch type and initialise values
         self._metadata = utilities.Bunch(
             box_id=binascii.b2a_hex(os.urandom(15)),
-            history=[],
-            cost_history=[],
-            construction_request=
-            None,  # used to store raw request made by factory if box was created in a factory
+            construction_request=None,  # if made in factory
             starting_box_tl=box_tl,
             starting_dims=dims,
-            n_transformations=0)
+            n_transformations=0,
+            headline_raw=None,
+            headline_tl=None,
+            headline_br=None,
+            history=[],
+            cost_history=[])
 
     # ~~ Properties ~~ #
     @property
@@ -308,6 +311,7 @@ class Box(object):
         outsmap_path = folderpath / Path("boxed_smap_" + request_name + str(image_name) + str(imagepath.suffix))
         outvid_path = folderpath / Path("history_" + request_name + str(image_name) + video_ext)
         metafile_path = folderpath / Path("metadata_" + request_name + str(image_name) + ".txt")
+        metapkl_path = folderpath / Path("metadata_" + request_name + str(image_name) + ".pkl")
         # yapf: enable
 
         # load image
@@ -318,8 +322,9 @@ class Box(object):
             # write headline on image and save
             outhl_path = folderpath / Path("headline_" + request_name +
                                            str(image_name) + ".png")
-            outhl = headline.draw(pil_image, self.box_tl, self.box_br,
-                                  self.shape)
+            outhl, self.metadata.headline_tl, self.metadata.headline_br = headline.draw(
+                pil_image, self.box_tl, self.box_br, self.shape)
+
             outhl.save(outhl_path)
 
         # write box image
@@ -336,6 +341,10 @@ class Box(object):
         writefile = open(metafile_path, "w+")
         writefile.write(str(self.metadata.__dict__))
         writefile.close()
+
+        # write metadata pickle (for loading in future if needed)
+        with metapkl_path.open('wb') as file:
+            pickle.dump(self.metadata, file)
 
 
 # ========================= /class ========================

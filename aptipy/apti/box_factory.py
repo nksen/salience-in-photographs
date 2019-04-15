@@ -18,11 +18,11 @@ Licensed under the terms of the GNU General Public License
 
 # std imports
 import os
-import cv2
-import numpy as np
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 from pathlib import Path
+import numpy as np
+import cv2
 # module imports
 from ..apti import bounding_box
 
@@ -33,12 +33,18 @@ class BoxFactory(object):
     box. Should be able to create multiple boxes .
     """
 
-    def __init__(self, s_map, min_size=np.array([0, 0]), min_area=0):
+    def __init__(self, s_map, headline=None):
         self._s_map = s_map
         # initialise requests list
         self._requests_list = None
-        self._min_size = min_size
-        self._min_area = min_area
+
+        if headline is not None:
+            self._text_ctx = headline
+            self._min_size, self._min_area = headline.get_constraints()
+        else:
+            self._text_ctx = None
+            self._min_size = np.array([0, 0])
+            self._min_area = 0
 
     # ~~ Properties ~~ #
     @property
@@ -79,11 +85,12 @@ class BoxFactory(object):
             pass
         elif isinstance(box_dims, float) and box_dims < 1 and box_dims > 0:
             # for passing box_dims as a fraction of image size
-            box_dims = box_dims * img_shape
+            box_dims = np.sqrt(box_dims) * img_shape
             box_dims = box_dims.astype(int)
         else:
             raise AssertionError(
-                "Invalid request: dimensions must be either float or ndarray")
+                "Invalid box_factory request: dimensions must be either float or ndarray"
+            )
 
         # account for all template locations
         if pos_readable == "tl":
@@ -158,6 +165,7 @@ class BoxFactory(object):
                                    self._min_size, self._min_area)
             # add request metadata
             box.metadata.construction_request = requests_readable[index]
+            box.metadata.headline_raw = str(self._text_ctx)
             boxes_list.append(box)
         return boxes_list
 
@@ -229,6 +237,7 @@ def write_boxes(boxes_list, folderpath, imagepath, headline=None):
             $requestanchor$
                 --files stored here--
     
+    headline kwarg passess through to box.write_to_file
     """
     # create top level directory
     parent_path = folderpath / Path(imagepath.stem)

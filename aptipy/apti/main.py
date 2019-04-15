@@ -64,16 +64,16 @@ def main():
     # ==== get a headline and measure ==== #
     headline_server = Requester()
     headline_raw, _ = headline_server.get()
+    print("HL: ", headline_raw)
 
     fontpath = Path(
         r'../salience-in-photographs/aptipy/assets/BBCReith/BBCReithSans_Bd.ttf'
     )
     text_ctx = Text(headline_raw, fontpath.resolve())
     text_ctx.rescale_font_size(s_map.shape)
-    min_sizes, min_area = text_ctx.get_constraints(headline_raw)
 
     # ==== generate boxes and directions ==== #
-    factory = box_factory.BoxFactory(s_map, min_sizes, min_area)
+    factory = box_factory.BoxFactory(s_map, headline=text_ctx)
     #factory = box_factory.BoxFactory(s_map)
     # generate requests for the factory
     box_init_size = 0.3  # this can be expressed as an ndarray or as a fraction of image size

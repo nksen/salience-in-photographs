@@ -165,14 +165,14 @@ class BoxFactory(object):
                                    self._min_size, self._min_area)
             # add request metadata
             box.metadata.construction_request = requests_readable[index]
-            box.metadata.headline_raw = str(self._text_ctx)
+            box.metadata.text_obj = self._text_ctx.__dict__
             boxes_list.append(box)
         return boxes_list
 
 
 def minimise_boxes(boxes_list,
                    directions_lists,
-                   step_size=10,
+                   step_size=5,
                    n_iterations=10000):
     """
     Utilises multiprocessing.Pool to minimise multiple boxes simultaneously. 
@@ -242,8 +242,8 @@ def write_boxes(boxes_list, folderpath, imagepath, headline=None):
     # create top level directory
     parent_path = folderpath / Path(imagepath.stem)
     if parent_path.is_dir():
-        raise ValueError("write_boxes: directory ", str(parent_path),
-                         " exists")
+        raise ValueError('write_boxes: directory ', str(parent_path),
+                         ' exists')
     parent_path.resolve().mkdir()
 
     # loop over boxes

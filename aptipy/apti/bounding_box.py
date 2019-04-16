@@ -118,7 +118,8 @@ class Box(object):
             headline_tl=None,
             headline_br=None,
             history=[],
-            cost_history=[])
+            cost_history=[],
+            text_obj=None)
 
     # ~~ Properties ~~ #
     @property

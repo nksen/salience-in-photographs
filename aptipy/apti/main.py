@@ -22,32 +22,21 @@ from ..scrape_headlines.requester import Requester
 from ..apti.text import Text
 
 
-def main():
+def main(img_path, savefolder):
     """
     main function for running the minimisation on a test image
     """
-    # ==== handle user input ==== #
-    # declare parser
-    parser = argparse.ArgumentParser()
-    # add args
-    parser.add_argument("img_path", help="path to image file", type=str)
-    parser.add_argument(
-        "-f", help="path to output",
-        type=str)  # this argument is optional (defaults to NoneType)
-
-    # grab args
-    args = parser.parse_args()
     ## save path ##
     # check if optional savepath has been given
     # if not specified, the root directory is used
-    if args.f is not None:
-        parent_save_path = Path.home() / Path(args.f)
+    if savefolder is not None:
+        parent_save_path = Path.home() / Path(savefolder)
         print(parent_save_path)
     else:
         parent_save_path = Path.cwd()
 
     ## image path ##
-    raw_img_path = Path.home() / Path(args.img_path)
+    raw_img_path = Path.home() / Path(img_path)
     # check that image exists
     if not raw_img_path.is_file():
         raise ValueError("Invalid image file path. File does not exist.")
@@ -63,7 +52,7 @@ def main():
 
     # ==== get a headline and measure ==== #
     headline_server = Requester()
-    headline_raw, headline_idx = headline_server.get(312)
+    headline_raw, headline_idx = headline_server.get()
     print("HL ", headline_idx, ": ", headline_raw)
 
     fontpath = Path(
@@ -127,5 +116,35 @@ def main():
     """
 
 
+def run_on_file():
+    # ==== handle user input ==== #
+    # declare parser
+    parser = argparse.ArgumentParser()
+    # add args
+    parser.add_argument("img_path", help="path to image file", type=str)
+    parser.add_argument(
+        "-f", help="path to output",
+        type=str)  # this argument is optional (defaults to NoneType)
+
+    # grab args
+    args = parser.parse_args()
+
+    # run main
+    main(args.img_path, args.f)
+
+
+def run_on_folder():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dir", help="path to image directory", type=str)
+    parser.add_argument(
+        "-f", help="path to output directory", type=str)  # optional
+
+    args = parser.parse_args()
+    # get files in dir
+    img_dir = Path.home() / Path(args.dir)
+    for img in img_dir.iterdir():
+        main(img, args.f)
+
+
 if __name__ == "__main__":
-    main()
+    run_on_folder()

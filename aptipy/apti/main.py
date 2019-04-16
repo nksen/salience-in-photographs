@@ -16,38 +16,27 @@ import numpy as np
 import argparse
 from pathlib import Path
 # module imports
-import preprocessing
-import bounding_box
-import directions_factory as df
-import box_factory
+from ..apti import preprocessing, bounding_box, box_factory
+from ..apti import directions_factory as df
+from ..scrape_headlines.requester import Requester
+from ..apti.text import Text
 
 
-def main():
+def main(img_path, savefolder):
     """
-    main function for running the minimisation on the a test image
+    main function for running the minimisation on a test image
     """
-    # ==== handle user input ==== #
-    # declare parser
-    parser = argparse.ArgumentParser()
-    # add args
-    parser.add_argument("img_path", help="path to image file", type=str)
-    parser.add_argument(
-        "-f", help="path to output",
-        type=str)  # this argument is optional (defaults to NoneType)
-
-    # grab args
-    args = parser.parse_args()
     ## save path ##
     # check if optional savepath has been given
     # if not specified, the root directory is used
-    if args.f is not None:
-        parent_save_path = Path.home() / Path(args.f)
+    if savefolder is not None:
+        parent_save_path = Path.home() / Path(savefolder)
         print(parent_save_path)
     else:
         parent_save_path = Path.cwd()
 
     ## image path ##
-    raw_img_path = Path.home() / Path(args.img_path)
+    raw_img_path = Path.home() / Path(img_path)
     # check that image exists
     if not raw_img_path.is_file():
         raise ValueError("Invalid image file path. File does not exist.")
@@ -61,10 +50,22 @@ def main():
     # process image
     s_map = preprocessing.generate_saliency_map(raw_img, to_display=True)
 
+    # ==== get a headline and measure ==== #
+    headline_server = Requester()
+    headline_raw, headline_idx = headline_server.get()
+    print("HL ", headline_idx, ": ", headline_raw)
+
+    fontpath = Path(
+        r'../salience-in-photographs/aptipy/assets/BBCReith/BBCReithSans_Bd.ttf'
+    )
+    text_ctx = Text(headline_raw, fontpath.resolve())
+    text_ctx.rescale_font_size(s_map.shape)
+
     # ==== generate boxes and directions ==== #
-    factory = box_factory.BoxFactory(s_map, text=None)
+    factory = box_factory.BoxFactory(s_map, headline=text_ctx)
+    #factory = box_factory.BoxFactory(s_map)
     # generate requests for the factory
-    box_init_size = 0.2  # this can be expressed as an ndarray or as a fraction of image size
+    box_init_size = 0.3  # this can be expressed as an ndarray or as a fraction of image size
     requests = [["tl", box_init_size], ["tr", box_init_size],
                 ["bl", box_init_size], ["br", box_init_size],
                 ["c", box_init_size], ["cl", box_init_size],
@@ -101,7 +102,8 @@ def main():
     """
 
     # write boxes
-    box_factory.write_boxes(box_list, parent_save_path, raw_img_path)
+    box_factory.write_boxes(
+        box_list, parent_save_path, raw_img_path, headline=text_ctx)
     """
    
     # minimise salience
@@ -114,5 +116,35 @@ def main():
     """
 
 
+def run_on_file():
+    # ==== handle user input ==== #
+    # declare parser
+    parser = argparse.ArgumentParser()
+    # add args
+    parser.add_argument("img_path", help="path to image file", type=str)
+    parser.add_argument(
+        "-f", help="path to output",
+        type=str)  # this argument is optional (defaults to NoneType)
+
+    # grab args
+    args = parser.parse_args()
+
+    # run main
+    main(args.img_path, args.f)
+
+
+def run_on_folder():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dir", help="path to image directory", type=str)
+    parser.add_argument(
+        "-f", help="path to output directory", type=str)  # optional
+
+    args = parser.parse_args()
+    # get files in dir
+    img_dir = Path.home() / Path(args.dir)
+    for img in img_dir.iterdir():
+        main(img, args.f)
+
+
 if __name__ == "__main__":
-    main()
+    run_on_folder()

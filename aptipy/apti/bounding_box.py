@@ -8,7 +8,7 @@ bounding_box.py
 
 Box class and accompanying functions.
 
-Copyright © 2018, Naim Sen 
+Copyright © 2018, Naim Sen
 Licensed under the terms of the GNU General Public License
 <https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
@@ -16,6 +16,7 @@ Licensed under the terms of the GNU General Public License
 # std imports
 import os
 import copy
+import pickle
 import binascii
 from pathlib import Path
 
@@ -44,10 +45,15 @@ class Box(object):
                  to be drawn over.
         data   : Segment of the image matrix that is covered by the
                  box. This is updated if the box is translated or
-                 resized.    
+                 resized.
     """
 
-    def __init__(self, s_map, box_tl, dims, minimum_size=np.array([0, 0])):
+    def __init__(self,
+                 s_map,
+                 box_tl,
+                 dims,
+                 min_size=np.array([0, 0]),
+                 min_area=0):
         """
         Box object initialiser
         Args:
@@ -68,20 +74,24 @@ class Box(object):
             raise ValueError("Anchor point must be non-negative.")
         if any(element < 0 for element in dims):
             raise ValueError("Dimensions must be non-negative.")
-        if any(element < 0 for element in minimum_size):
+        if any(element < 0 for element in min_size):
             raise ValueError("Min size must be non-negative.")
 
-        # check that dimensions are large than minimum_size
-        if dims[0] < minimum_size[0]:
+        # check that dimensions are large than min_size
+        if dims[0] < min_size[0]:
             raise ValueError("i'th dimension is less than minimum size.")
-        if dims[1] < minimum_size[1]:
+        if dims[1] < min_size[1]:
             raise ValueError("j'th dimension is less than minimum size.")
+
+        # check if area is less than min_area
+        if dims[0] * dims[1] <= min_area:
+            raise ValueError("area must exceed minimum area")
 
         # assign vars
         self._box_tl = box_tl
         self._dims = dims
         self._s_map = s_map
-        self._min_size = minimum_size
+        self._min_size = min_size
         # compute and check box_br
         box_br = np.add(box_tl, dims)
         if box_br[0] > s_map.shape[0] or box_br[1] > s_map.shape[1]:
@@ -100,13 +110,16 @@ class Box(object):
         # declare metadata Bunch type and initialise values
         self._metadata = utilities.Bunch(
             box_id=binascii.b2a_hex(os.urandom(15)),
-            history=[],
-            cost_history=[],
-            construction_request=
-            None,  # used to store raw request made by factory if box was created in a factory
+            construction_request=None,  # if made in factory
             starting_box_tl=box_tl,
             starting_dims=dims,
-            n_transformations=0)
+            n_transformations=0,
+            headline_raw=None,
+            headline_tl=None,
+            headline_br=None,
+            history=[],
+            cost_history=[],
+            text_obj=None)
 
     # ~~ Properties ~~ #
     @property
@@ -122,6 +135,10 @@ class Box(object):
         return self._dims
 
     @property
+    def size(self):
+        return self._dims[0] * self._dims[1]
+
+    @property
     def data(self):
         return self._data
 
@@ -135,7 +152,13 @@ class Box(object):
         Calculates the cost bounded by the box.
         Changing to a more detailed calculation.
         """
-        return np.sum(self._data) / (self.shape[0] * self.shape[1])**2
+        av_density = np.sum(self._s_map) / (self._s_map.size)
+        box_density = np.sum(self._data) / (self.size)
+        #cost_val = (box_density / av_density) + np.sqrt(
+        #        (self._s_map.size - self.size) / self._s_map.size)
+        cost_val = box_density / av_density
+        return cost_val
+        #return np.sum(self._data) / (self.shape[0] * self.shape[1])**2
 
     @property
     def metadata(self):
@@ -187,7 +210,6 @@ class Box(object):
         Returns:
             img_with_overlay: The image with the overlaid box.
         Raises:
-       
         """
 
         # define tuples for cv2.rectangle
@@ -270,7 +292,11 @@ class Box(object):
 
         writer.release()
 
-    def write_to_file(self, folderpath, imagepath, video_ext=".avi"):
+    def write_to_file(self,
+                      folderpath,
+                      imagepath,
+                      headline=None,
+                      video_ext=".avi"):
         """
         Writes box + video + metadata to folderpath
         """
@@ -286,10 +312,22 @@ class Box(object):
         outsmap_path = folderpath / Path("boxed_smap_" + request_name + str(image_name) + str(imagepath.suffix))
         outvid_path = folderpath / Path("history_" + request_name + str(image_name) + video_ext)
         metafile_path = folderpath / Path("metadata_" + request_name + str(image_name) + ".txt")
+        metapkl_path = folderpath / Path("metadata_" + request_name + str(image_name) + ".pkl")
         # yapf: enable
 
         # load image
         image = cv2.imread(str(imagepath))
+
+        if headline is not None:
+            pil_image = PIL.Image.open(imagepath)
+            # write headline on image and save
+            outhl_path = folderpath / Path("headline_" + request_name +
+                                           str(image_name) + ".png")
+            outhl, self.metadata.headline_tl, self.metadata.headline_br = headline.draw(
+                pil_image, self.box_tl, self.box_br, self.shape)
+
+            outhl.save(outhl_path)
+
         # write box image
         outimg = self.overlay_box(image)
         cv2.imwrite(str(outimg_path), outimg)
@@ -298,18 +336,19 @@ class Box(object):
         cv2.imwrite(str(outsmap_path), outsmap)
 
         # write video
-        self.playback_history(image, str(outvid_path))
+        #self.playback_history(image, str(outvid_path))
 
         # write metadata
         writefile = open(metafile_path, "w+")
         writefile.write(str(self.metadata.__dict__))
         writefile.close()
 
+        # write metadata pickle (for loading in future if needed)
+        with metapkl_path.open('wb') as file:
+            pickle.dump(self.metadata, file)
+
 
 # ========================= /class ========================
-
-import copy
-import sys
 
 
 def minimise_cost(starting_box,

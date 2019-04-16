@@ -19,20 +19,20 @@ import numpy as np
 import pandas as pd
 
 filepath = r"D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\all_participants_onlyfixations.xlsx"
-results_dframe = pd.read_excel(filepath)
-print(results_dframe.head(10))
+results_df = pd.read_excel(filepath)
+print(results_df.head(10))
 #%% [markdown]
 # Now clean the data of useless columns etc.
 #%%
 # print out columns
-print(results_dframe.columns.values)
+print(results_df.columns.values)
 #%%
-results_dframe = results_dframe.drop([
+results_df = results_df.drop([
     'ExportDate', 'StudioVersionRec', 'StudioProjectName',
     'RecordingResolution', 'FixationFilter'
 ],
-                                     axis=1)
-print(results_dframe.head(10))
+                             axis=1)
+print(results_df.head(10))
 
 #%% [markdown]
 # # Data restructuring
@@ -41,28 +41,48 @@ print(results_dframe.head(10))
 # that the data points are calibration points.
 #%%
 # Add new column
-results_dframe['IsCalibration'] = np.full(len(results_dframe), False)
+results_df['IsCalibration'] = np.full(len(results_df), False)
 #%%
-prev_name = results_dframe['MediaName'][0]
+prev_name = results_df['MediaName'][0]
 # Loop over each element
-for i in range(len(results_dframe)):
+for i in range(len(results_df)):
     # ignore first element
     if i == 0:
         pass
     else:
-        current_name = results_dframe['MediaName'][i]
+        current_name = results_df['MediaName'][i]
         # check if the current element is the same stimulus as previous data point
         if current_name == prev_name:
             pass
         # check if current element is a calibration point
         elif current_name == 'drift_calibration.png':
-            results_dframe['MediaName'][i] = prev_name
-            results_dframe['IsCalibration'][i] = True
+            results_df['MediaName'][i] = prev_name
+            results_df['IsCalibration'][i] = True
         # current element must be for a new stimulus if it is not a calibration
         # point or same as old stimulus
         else:
             prev_name = current_name
 
-results_dframe
+#%%
+results_df
+
+#%% [markdown]
+# Next, we split the dataframe into individual dataframes for each stimulus.
+
+#%%
+dict_of_stimuli = {key: val for key, val in results_df.groupby('MediaName')}
+
+#%% [markdown]
+# Now split by recording
+
+#%%
+for stim, stim_df in dict_of_stimuli.items():
+    dict_of_recordings = {
+        stim: {
+            recording: rec_df
+            for recording, rec_df in stim_df.groupby('RecordingName')
+        }
+    }
+dict_of_recordings.keys()
 
 #%%

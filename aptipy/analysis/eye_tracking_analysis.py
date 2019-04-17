@@ -40,8 +40,8 @@ print(results_df.head(10))
 # First, we relabel the calibration MediaName and add an additional column (bool) to indicate
 # that the data points are calibration points.
 #%%
-# Add new column
-results_df['IsCalibration'] = np.full(len(results_df), False)
+# Add new column to distinguish datapoints and calibration points
+results_df['ElementType'] = np.full(len(results_df), 'DataPoint')
 #%%
 prev_name = results_df['MediaName'][0]
 # Loop over each element
@@ -57,7 +57,7 @@ for i in range(len(results_df)):
         # check if current element is a calibration point
         elif current_name == 'drift_calibration.png':
             results_df['MediaName'][i] = prev_name
-            results_df['IsCalibration'][i] = True
+            results_df['ElementType'][i] = 'CalibrationPoint'
         # current element must be for a new stimulus if it is not a calibration
         # point or same as old stimulus
         else:
@@ -67,22 +67,45 @@ for i in range(len(results_df)):
 results_df
 
 #%% [markdown]
-# Next, we split the dataframe into individual dataframes for each stimulus.
+# ## Next, we split the dataframe into individual dataframes for each stimulus.
 
 #%%
 dict_of_stimuli = {key: val for key, val in results_df.groupby('MediaName')}
 
 #%% [markdown]
-# Now split by recording
+# ## Now split by recording...
+# We want a dict of dicts of dicts
+#   - {MediaName : dict{...
+#        - RecordingName : dict{...
+#           - ElementType : dataframe(by elementtype, by recording, by medianame) }
+#               }
+#            }
 
 #%%
+# Empty parent-level dictionary
+dicts_of_results = dict()
+# loop over dictionary of MediaName : dataframes
 for stim, stim_df in dict_of_stimuli.items():
-    dict_of_recordings = {
-        stim: {
-            recording: rec_df
-            for recording, rec_df in stim_df.groupby('RecordingName')
+    # create daughter-level dictionary
+    daughter_vals = {key: val for key, val in stim_df.groupby('RecordingName')}
+    for rec, rec_df in daughter_vals.items():
+        # create granddaughter-level dictionary
+        gdaughter_vals = {
+            key: val
+            for key, val in rec_df.groupby('ElementType')
         }
-    }
-dict_of_recordings.keys()
+        daughter_vals[rec] = gdaughter_vals
+    dicts_of_results[stim] = daughter_vals
+
+#%% [markdown]
+# ## To outline the data structure...
+#%%
+dicts_of_results.keys()
+
+#%%
+dicts_of_results['DiegoCosta.jpg'].keys()
+
+#%%
+dicts_of_results['DiegoCosta.jpg']['Rec 01'].keys()
 
 #%%

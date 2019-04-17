@@ -77,74 +77,82 @@ for i in range(len(results_df)):
 results_df
 
 #%% [markdown]
-# Next, we split the dataframe into individual dataframes for each recording.
+# Next, we split the dataframe into individual dataframes for each stimulus.
 
 #%%
-dict_of_recordings = {
-    key: val
-    for key, val in results_df.groupby('RecordingName')
-}
+dict_of_stimuli = {key: val for key, val in results_df.groupby('MediaName')}
 
 #%% [markdown]
-# ## For each recording (Rec 01 -> Rec 10), the calibration data is plotted.
+# ## Now split by recording...
+# We want a dict of dicts of dicts
+#   - {MediaName : dict{...
+#        - RecordingName : dict{...
+#           - ElementType : dataframe(by elementtype, by recording, by medianame) }
+#               }
+#            }
+
+#%%
+# Empty parent-level dictionary
+dicts_of_results = dict()
+# loop over dictionary of MediaName : dataframes
+for stim, stim_df in dict_of_stimuli.items():
+    # create daughter-level dictionary
+    daughter_vals = {key: val for key, val in stim_df.groupby('RecordingName')}
+    for rec, rec_df in daughter_vals.items():
+        # create granddaughter-level dictionary
+        gdaughter_vals = {
+            key: val
+            for key, val in rec_df.groupby('ElementType')
+        }
+        daughter_vals[rec] = gdaughter_vals
+    dicts_of_results[stim] = daughter_vals
+
+#%% [markdown]
+# ## To outline the data structure...
+#%%
+dicts_of_results.keys()
+
+#%%
+dicts_of_results['DiegoCosta.jpg'].keys()
+
+#%%
+dicts_of_results['DiegoCosta.jpg']['Rec 01'].keys()
+
+#%% [markdown]
+# ## Handling systematic and random error
+# To handle these, we look at the CalibrationPoints. Let's plot one of these...
 
 #%%
 import matplotlib.pyplot as plt
-plt.rcParams['figure.dpi'] = 170
 
-for rec, rec_df in dict_of_recordings.items():
-    only_calibration = rec_df.loc[rec_df['ElementType'] == 'CalibrationPoint']
-    ax = only_calibration.plot.scatter(
-        'FixationPointX',
-        'FixationPointY',
-        c='GazeEventDuration',
-        colormap='viridis')
-    ax.plot(1366 / 2, 768 / 2, 'r+', markersize=14)
-    ax.set_xlim(0, 1366)
-    ax.set_ylim(0, 768)
-    ax.set_title(rec)
+example_df = dicts_of_results['getty button.jpg']['Rec 04']['CalibrationPoint']
+example_df.plot.scatter(
+    'FixationPointX',
+    'FixationPointY',
+)
+plt.xlim(0, 1366)
+plt.ylim(0, 768)
+
+example_df
 
 #%% [markdown]
-# ## Systematic and random error
-# Calculate systematic error by taking the average position of
-# fixations on the calibration image for each recording
+# ## Calculating systematic drift
+# For each image and each recording instance, we calculate the weighted mean
+# of the calibration data and take the weighted standard deviation.
 
 #%%
 from aptipy.analysis.utilities import wavg, wvar
+mean_x = wavg(example_df, 'FixationPointX', 'GazeEventDuration')
+mean_y = wavg(example_df, 'FixationPointY', 'GazeEventDuration')
 
-for rec, rec_df in dict_of_recordings.items():
-    only_calibration = rec_df.loc[rec_df['ElementType'] == 'CalibrationPoint']
-    wmean_x = wavg(only_calibration, 'FixationPointX', 'GazeEventDuration')
-    wmean_y = wavg(only_calibration, 'FixationPointY', 'GazeEventDuration')
+var_x = wvar(example_df, 'FixationPointX', 'GazeEventDuration')
+var_y = wvar(example_df, 'FixationPointY', 'GazeEventDuration')
 
-    wvar_x = wvar(only_calibration, 'FixationPointX', 'GazeEventDuration')
-    wvar_y = wvar(only_calibration, 'FixationPointY', 'GazeEventDuration')
-
-    plt.figure()
-    plt.errorbar(
-        wmean_x, wmean_y, xerr=np.sqrt(wvar_x), yerr=np.sqrt(wvar_y), fmt='x')
-    plt.plot(1366 / 2, 768 / 2, 'r+', markersize=14)
-    plt.xlim(0, 1366)
-    plt.ylim(0, 768)
-    plt.title(rec)
-
-#%% [markdown]
-# ## Plotting on an image (TEST)
-
-#%%
-img_parent_path = r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\test_images_2'
-boyceimg = plt.imread(img_parent_path + r'\boyce.jpg')
-
-rec10_df = dict_of_recordings['Rec 10']
-isboyce = rec10_df['MediaName'] == 'boyce.jpg'
-isdata = rec10_df['ElementType'] == 'DataPoint'
-
-boyce_df = rec10_df.loc[isboyce & isdata]
-
-boyce_df.plot.scatter(
-    'FixationPointX',
-    'FixationPointY',
-    c='GazeEventDuration',
-    colormap='viridis')
-plt.imshow(boyceimg, extent=[0, 1024, 0, 598])
-#%%
+plt.errorbar(
+    int(mean_x),
+    int(mean_y),
+    xerr=np.sqrt(var_x),
+    yerr=np.sqrt(var_y),
+    fmt='x')
+plt.xlim(0, 1366)
+plt.ylim(0, 768)

@@ -1,12 +1,11 @@
 """
 --Naim Sen--
---Toby Ticehurst--
 
 Apr 19
 
 Handles unpacking and analysing eye tracking data
 
-Copyright © 2018, Naim Sen
+Copyright © 2019, Naim Sen
 Licensed under the terms of the GNU General Public License
 <https://www.gnu.org/licenses/gpl-3.0.en.html>
 """
@@ -17,6 +16,8 @@ Licensed under the terms of the GNU General Public License
 #%%
 import numpy as np
 import pandas as pd
+
+from aptipy.analysis import utilities
 
 filepath = r"D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\all_participants_onlyfixations.xlsx"
 results_df = pd.read_excel(filepath)
@@ -107,5 +108,37 @@ dicts_of_results['DiegoCosta.jpg'].keys()
 
 #%%
 dicts_of_results['DiegoCosta.jpg']['Rec 01'].keys()
+
+#%% [markdown]
+# ## Handling systematic and random error
+# To handle these, we look at the CalibrationPoints. Let's plot one of these...
+
+#%%
+import matplotlib.pyplot as plt
+
+example_df = dicts_of_results['DiegoCosta.jpg']['Rec 01']['CalibrationPoint']
+example_df.plot.scatter(
+    'FixationPointX (MCSpx)',
+    'FixationPointY (MCSpx)',
+)
+plt.xlim(0, 1366)
+plt.ylim(0, 768)
+
+example_df
+
+#%% [markdown]
+# ## Calculating systematic drift
+# For each image and each recording instance, we calculate the weighted average
+# of the calibration data. The weighted average of the previous example dataframe.
+
+#%%
+mean_x = utilities.wavg(example_df, 'FixationPointX (MCSpx)',
+                        'GazeEventDuration')
+mean_y = utilities.wavg(example_df, 'FixationPointY (MCSpx)',
+                        'GazeEventDuration')
+
+plt.scatter(int(mean_x), int(mean_y))
+plt.xlim(0, 1366)
+plt.ylim(0, 768)
 
 #%%

@@ -22,3 +22,17 @@ def wavg(df, data_name, weight_name):
         return (d * w).sum() / w.sum()
     except ZeroDivisionError:
         return d.mean()
+
+
+def wvar(df, data_name, weight_name):
+    """
+    Calculates the weighted sample variance of the column named
+    data_name
+    """
+    d = df[data_name]
+    w = df[weight_name]
+    wmean = wavg(df, data_name, weight_name)
+    try:
+        return (w * (d - wmean)**2).sum() / w.sum()
+    except ZeroDivisionError:
+        return d.var()

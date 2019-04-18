@@ -108,7 +108,7 @@ for rec, rec_df in dict_of_recordings.items():
 # fixations on the calibration image for each recording
 
 #%%
-from aptipy.analysis.utilities import wavg, wvar
+from aptipy.analysis.utilities import wavg, wvar, wcov
 
 errors_dict = dict()
 for rec, rec_df in dict_of_recordings.items():
@@ -118,8 +118,10 @@ for rec, rec_df in dict_of_recordings.items():
 
     wvar_x = wvar(only_calibration, 'FixationPointX', 'GazeEventDuration')
     wvar_y = wvar(only_calibration, 'FixationPointY', 'GazeEventDuration')
+    wcov_xy = wcov(only_calibration, 'FixationPointX', 'FixationPointY',
+                   'GazeEventDuration')
 
-    errors_dict[rec] = [(wmean_x, wmean_y), (np.sqrt(wvar_x), np.sqrt(wvar_y))]
+    errors_dict[rec] = [(wmean_x, wmean_y), (wvar_x, wvar_y, wcov_xy)]
 
     plt.figure()
     plt.errorbar(
@@ -194,6 +196,7 @@ for rec, val in errors_dict.items():
 
     adjusted_df.loc[is_rec, 'FixationPointXErr'] = np.sqrt(val[1][0])
     adjusted_df.loc[is_rec, 'FixationPointYErr'] = np.sqrt(val[1][1])
+    adjusted_df.loc[is_rec, 'FixationPointXYCov'] = val[1][2]
 
 adjusted_df.loc[:,
                 'GazeEventProportion'] = adjusted_df.loc[:,

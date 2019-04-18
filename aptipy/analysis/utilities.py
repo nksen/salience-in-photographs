@@ -40,6 +40,19 @@ def wvar(df, data_name, weight_name):
         return d.var()
 
 
+def wcov(df, name1, name2, weight):
+    """
+    Only supports equal weight for each variable
+    """
+    d1 = df[name1]
+    d2 = df[name2]
+    w = df[weight]
+    wmean1 = wavg(df, name1, weight)
+    wmean2 = wavg(df, name2, weight)
+
+    return (w * (d1 - wmean1) * (d2 - wmean2)).sum() / w.sum()
+
+
 def load_images(folder):
     """
     Loads all images in folder into a dict

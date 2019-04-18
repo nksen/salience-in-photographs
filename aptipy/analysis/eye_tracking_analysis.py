@@ -230,5 +230,47 @@ plt.title('boyce.jpg all recordings (adjusted)')
 #%%
 from aptipy.analysis.utilities import load_images
 image_dict = load_images(img_parent_path)
-display(image_dict.items())
+
+for medianame, image in image_dict.items():
+    xvals = adjusted_df.loc[adjusted_df.MediaName ==
+                            medianame, 'FixationPointX']
+    yvals = adjusted_df.loc[adjusted_df.MediaName ==
+                            medianame, 'FixationPointY']
+    xerr = adjusted_df.loc[adjusted_df.MediaName ==
+                           medianame, 'FixationPointXErr']
+    yerr = adjusted_df.loc[adjusted_df.MediaName ==
+                           medianame, 'FixationPointYErr']
+    duration = adjusted_df.loc[adjusted_df.MediaName ==
+                               medianame, 'GazeEventProportion'].values
+
+    plt.figure()
+
+    # Convert duration to colour map
+    cmap = matplotlib.cm.Reds
+    norm = Normalize(vmin=duration.min(), vmax=duration.max())
+
+    plt.errorbar(
+        xvals,
+        yvals,
+        xerr=xerr,
+        yerr=yerr,
+        fmt='none',
+        elinewidth=1,
+        ecolor=cmap(norm(duration)))
+    plt.imshow(image, extent=[0, image.shape[1], 0, image.shape[0]])
+    plt.title(medianame + ' adjusted')
+#%% [markdown]
+# ## Export all the things
+
+#%%
+import pickle
+
+adjusted_df.to_excel(
+    r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\eyetracking_analysis\adjusted_gazedata.xlsx'
+)
+
+pickle.dump(image_dict, (open(
+    r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\eyetracking_analysis\images_dict.pkl',
+    'wb')))
+
 #%%

@@ -81,6 +81,22 @@ def draw_gauss2(gaze_map, datapoint, total_duration):
     #     yerr=datapoint.FixationPointYErr)
 
 
+# Define colormap with transparency so that the gaze_map can
+# be plotted over an image
+from matplotlib.colors import LinearSegmentedColormap
+
+# get colormap
+ncolors = 256
+color_arr = plt.get_cmap('Reds')(range(ncolors))
+
+# alpha values
+color_arr[:, -1] = np.linspace(0., 1., ncolors)
+
+# colormap obj
+map_obj = LinearSegmentedColormap.from_list(
+    name='Reds_alpha', colors=color_arr)
+plt.register_cmap(cmap=map_obj)
+
 for img_name, img_df in gaze_byimage.items():
     # create canvas
     gaze_map = np.zeros((2000, 2000))
@@ -100,8 +116,9 @@ for img_name, img_df in gaze_byimage.items():
     img_shape = imgs_dict[img_name].shape
 
     plt.figure()
+    plt.imshow(imgs_dict[img_name], extent=[0, img_shape[1], 0, img_shape[0]])
     plt.imshow(
-        gaze_map, extent=[0, img_shape[1], 0, img_shape[0]], cmap='Reds')
+        gaze_map, extent=[0, img_shape[1], 0, img_shape[0]], cmap='Reds_alpha')
     plt.colorbar()
     plt.title(img_name)
 

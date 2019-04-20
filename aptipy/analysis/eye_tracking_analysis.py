@@ -18,6 +18,7 @@ Licensed under the terms of the GNU General Public License
 # Load in all the data...
 
 #%%
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -48,6 +49,8 @@ gaze_byimage = {img_name: df for img_name, df in gaze_df.groupby('MediaName')}
 
 #%%
 #from aptipy.analysis.utilities import draw_gauss2
+import cv2
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def draw_gauss2(gaze_map, datapoint, total_duration):
@@ -59,8 +62,8 @@ def draw_gauss2(gaze_map, datapoint, total_duration):
 
     img_xy = (datapoint.MediaWidth, datapoint.MediaHeight)
 
-    x = np.linspace(0, img_xy[0], 2000)
-    y = np.linspace(0, img_xy[1], 2000)
+    x = np.linspace(0, img_xy[0], gaze_map.shape[0])
+    y = np.linspace(0, img_xy[1], gaze_map.shape[0])
 
     xx, yy = np.meshgrid(x, y)
 
@@ -97,24 +100,32 @@ map_obj = LinearSegmentedColormap.from_list(
     name='Reds_alpha', colors=color_arr)
 plt.register_cmap(cmap=map_obj)
 
+# declare gazemap dictionary
+gazemaps_byimage = dict()
+# loop over images
 for img_name, img_df in gaze_byimage.items():
     # create canvas
     gaze_map = np.zeros((2000, 2000))
     # compute total duration recorded
     duration = img_df['GazeEventDuration'].sum()
     i_ = 0
+    # loop over fixations
     for row in img_df.itertuples():
         draw_gauss2(gaze_map, row, duration)
 
-        i_ += 1
-        if False:
-            plt.figure()
-            plt.imshow(gaze_map, extent=[0, 624, 0, 351], cmap='gray')
-            plt.colorbar()
+    # Add gazemap to dict
+    gazemaps_byimage[img_name] = gaze_map
 
     # get image dims
     img_shape = imgs_dict[img_name].shape
+    # resize image
+    gaze_map = cv2.resize(gaze_map, (img_shape[1], img_shape[0]))
+    gaze_map /= gaze_map.max()
+    gaze_map *= 255
+    gaze_map = gaze_map.astype(np.uint8)
 
+    savepath = r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\eyetracking_analysis' + '\\gazemaps\\' + 'gazemap_' + img_name
+    cv2.imwrite(savepath, gaze_map)
     plt.figure()
     plt.imshow(imgs_dict[img_name], extent=[0, img_shape[1], 0, img_shape[0]])
     plt.imshow(

@@ -27,6 +27,29 @@ import cv2
 from ..apti import bounding_box
 
 
+def positions_list():
+    return [
+        #"top left",
+        "tl",
+        #"top right",
+        "tr",
+        #"bottom left",
+        "bl",
+        #"bottom right",
+        "br",
+        #"centered",
+        "c",
+        #"centre left",
+        "cl",
+        #"centre right",
+        "cr",
+        #"centre top",
+        "ct",
+        #"centre bottom",
+        "cb"
+    ]
+
+
 class BoxFactory(object):
     """
     BoxFactory encapsulates all template generation of the

@@ -11,6 +11,9 @@ Licensed under the terms of the GNU General Public License
 """
 import os
 import matplotlib.pyplot as plt
+import numpy as np
+
+from aptipy.apti.bounding_box import Box
 
 
 def wavg(df, data_name, weight_name):
@@ -61,3 +64,21 @@ def load_images(folder):
     for file in os.listdir(folder):
         images[file] = plt.imread(folder + '\\' + file)
     return images
+
+
+def remove_prefix(text, prefix):
+    if text.startswith(prefix):
+        text = text[len(prefix):]
+    return text
+
+
+class GazeBox(Box):
+    # Override cost to be total gaze density
+    @property
+    def cost(self):
+        cost_val = np.sum(self._data) / self.size
+        return cost_val
+
+    @property
+    def total_cost(self):
+        return np.sum(self._s_map) / self._s_map.size

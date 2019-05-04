@@ -125,12 +125,14 @@ for img_name, img_df in gaze_byimage.items():
     gaze_map = gaze_map.astype(np.uint8)
 
     savepath = r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\eyetracking_analysis' + '\\gazemaps\\' + 'gazemap_' + img_name
-    cv2.imwrite(savepath, gaze_map)
+    #cv2.imwrite(savepath, gaze_map)
     plt.figure()
     plt.imshow(imgs_dict[img_name], extent=[0, img_shape[1], 0, img_shape[0]])
     plt.imshow(
         gaze_map, extent=[0, img_shape[1], 0, img_shape[0]], cmap='Reds_alpha')
-    plt.colorbar()
+    plt.colorbar(label='Gaze heat')
+    plt.xlabel('X /px')
+    plt.ylabel('Y /px')
     plt.title(img_name)
 
 #%%

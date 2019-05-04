@@ -24,6 +24,7 @@ Licensed under the terms of the GNU General Public License
 import os
 import pickle
 from pathlib import Path
+import pandas as pd
 
 import cv2
 import matplotlib.pyplot as plt
@@ -74,13 +75,17 @@ for img_name in gazemaps_dict:
 
 #%% [markdown]
 # ##
-# With all the bits loaded, we now want to construct a gazebox and measure all the 
-
+# With all the bits loaded, we now want to construct a gazebox and measure the
+# gaze density for each box position. Any invalid text positions will be discarded.
+# We store the results as a pandas dataframe.
 #%%
+results_df = pd.DataFrame(columns=['MediaName', 'BoxPosition', 'BoxGazeDensity', 'TotalGazeDensity'])
 for img_name, gazemap in gazemaps_dict.items():
     for box_pos, metadata in boxes_dict[img_name].items():
-        # get tl and dims to construct box
-        #display(metadata.__dict__)
+        # temporary dictionary to store a row
+        row_dict = {'MediaName': img_name, 'BoxPosition': box_pos}
+        
+        # get tl and dims to construct gaze box
         box_tl = [metadata.headline_tl[1], metadata.headline_tl[0]]
         box_dims = [
             metadata.headline_br[1] - metadata.headline_tl[1],
@@ -89,28 +94,56 @@ for img_name, gazemap in gazemaps_dict.items():
 
         # construct GazeBox
         try:
-            gazebox = utilities.GazeBox(gazemap, box_tl, box_dims)
-            gazemap_with_overlay = gazebox.overlay_box(gazemap)
-        except:
-            display("BROKE HERE")
-            display(gazemap.shape)
-            display(metadata.__dict__)
-            display(img_name)
-        #fig = plt.figure()
-        #ax = fig.add_subplot(111)
-        #ax.imshow(gazemap_with_overlay)
-        title_str = img_name + ' ' + box_pos
-        #ax.set_title(title_str)
+            from aptipy.apti.preprocessing import generate_saliency_map
 
-        display(title_str)
-        display("box cost: %f" % (gazebox.cost))
-        display("image cost: %f" % gazebox.total_cost)
-        #display(fig)
-        display('---------------------------------------------------')
-        #plt.close() # needed to suppress ipy auto output
-    
+            # load image and generate smap
+            raw_img = cv2.imread(r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\test_images_2' + '\\' + img_name)
+
+            smap = generate_saliency_map(raw_img)
+            gazebox = utilities.GazeBox(gazemap, box_tl, box_dims)
+            sbox = bounding_box.Box(smap, box_tl, box_dims)
+            gazemap_with_overlay = gazebox.overlay_box(gazemap)
+
+            # append to row dict
+            row_dict['OrgBoxCost'] = metadata.cost_history[-1]
+            row_dict['HeadlineCost'] = sbox.cost
+            row_dict['BoxGazeDensity'] = gazebox.gaze_heat_density
+            row_dict['TotalGazeDensity'] = gazebox.total_heat_density
+
+        except:
+            # append NaN to row if results are invalid
+            row_dict['BoxGazeDensity'] = None
+            row_dict['TotalGazeDensity'] = None
+        results_df = results_df.append(row_dict, ignore_index=True)
+
+results_df['FractionalGazeDensity'] = results_df['BoxGazeDensity'] / results_df['TotalGazeDensity']
+with pd.option_context('display.max_rows',None):
+    display(results_df)
+
+#%% [markdown]
+# ## Export and visualisation
+# Now export the dataframe for safekeeping.
+
+
 #%%
-meta = boxes_dict['eoin_morgan_getty.jpg']['tr']
-display(meta.__dict__)
-gazemaps_dict['eoin_morgan_getty.jpg'].shape
+savepath = r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\eyetracking_analysis\gazedata_results.xlsx'
+results_df.to_excel(savepath)
+
+
+#%% [markdown]
+# ## Boxes with lowest fractional gaze density
+#%%
+gaze_based_selection = results_df.loc[results_df.groupby(['MediaName'])['FractionalGazeDensity'].idxmin()]
+hlcost_based_selection = results_df.loc[results_df.groupby(['MediaName'])['HeadlineCost'].idxmin()]
+boxcost_based_selection = results_df.loc[results_df.groupby(['MediaName'])['OrgBoxCost'].idxmin()]
+
+selection_overlap = pd.merge(gaze_based_selection, hlcost_based_selection, how='inner', on=['BoxGazeDensity'])
+boxselection_overlap = pd.merge(gaze_based_selection, boxcost_based_selection, how='inner', on=['BoxGazeDensity'])
+
+with pd.option_context('display.max_rows',None):
+    display("gaze based selection", gaze_based_selection)
+    display("box-cost based selection", boxcost_based_selection)
+    display("headline-cost based selection", hlcost_based_selection)
+    display("headline/gaze overlap", selection_overlap)
+    display("box/gaze overlap", boxselection_overlap)
 #%%

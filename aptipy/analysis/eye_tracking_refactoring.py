@@ -88,18 +88,25 @@ dict_of_recordings = {
 
 #%%
 import matplotlib.pyplot as plt
-plt.rcParams['figure.dpi'] = 170
+plt.rcParams['figure.dpi'] = 150
 
 for rec, rec_df in dict_of_recordings.items():
     only_calibration = rec_df.loc[rec_df['ElementType'] == 'CalibrationPoint']
-    ax = only_calibration.plot.scatter(
-        'FixationPointX',
-        'FixationPointY',
-        c='GazeEventDuration',
-        colormap='viridis')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    im = ax.scatter(
+        only_calibration['FixationPointX'],
+        only_calibration['FixationPointY'],
+        marker='x',
+        c=only_calibration['GazeEventDuration'],
+        cmap='viridis')
     ax.plot(1366 / 2, 768 / 2, 'r+', markersize=14)
     ax.set_xlim(0, 1366)
     ax.set_ylim(0, 768)
+    ax.set_xlabel('Fixation point X /px')
+    ax.set_ylabel('Fixation point Y /px')
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.set_label('Gaze event duration /ms')
     ax.set_title(rec)
 
 #%% [markdown]
@@ -129,6 +136,8 @@ for rec, rec_df in dict_of_recordings.items():
     plt.plot(1366 / 2, 768 / 2, 'r+', markersize=14)
     plt.xlim(0, 1366)
     plt.ylim(0, 768)
+    plt.xlabel('Mean fixation point X')
+    plt.ylabel('Mean fixation point Y')
     plt.title(rec)
 
 #%% [markdown]
@@ -137,8 +146,11 @@ for rec, rec_df in dict_of_recordings.items():
 # from each datapoint. A pair of example plots are shown below.
 
 #%%
+from PIL import Image
+
 img_parent_path = r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\test_images_2'
-boyceimg = plt.imread(img_parent_path + r'\boyce.jpg', )
+#boyceimg = plt.imread(img_parent_path + r'\boyce.jpg', )
+boyceimg = Image.open(img_parent_path + r'\boyce.jpg', 'r').convert('LA')
 
 temp_rec_df = dict_of_recordings['Rec 01']
 isboyce = temp_rec_df['MediaName'] == 'boyce.jpg'
@@ -146,12 +158,16 @@ isdata = temp_rec_df['ElementType'] == 'DataPoint'
 
 boyce_df = temp_rec_df.loc[isboyce & isdata]
 
-boyce_df.plot.scatter(
-    'FixationPointX',
-    'FixationPointY',
-    c='GazeEventDuration',
-    colormap='viridis')
+plt.scatter(
+    boyce_df['FixationPointX'],
+    boyce_df['FixationPointY'],
+    c=boyce_df['GazeEventDuration'],
+    cmap='viridis')
 plt.imshow(boyceimg, extent=[0, 1024, 0, 598])
+cbar = plt.colorbar()
+cbar.set_label('Gaze event duration /ms')
+plt.xlabel('Unadjusted fixation point X /px')
+plt.ylabel('Unadjusted fixation point Y /px')
 plt.title('boyce.jpg Rec 01 without correction')
 #%%
 # Now subtract the systematic away
@@ -164,12 +180,16 @@ boyce_df.loc[:,
              'FixationPointX'] = boyce_df.loc[:, 'FixationPointX'] - x_offset
 
 plt.figure()
-boyce_df.plot.scatter(
-    'FixationPointX',
-    'FixationPointY',
-    c='GazeEventDuration',
-    colormap='viridis')
+plt.scatter(
+    boyce_df['FixationPointX'],
+    boyce_df['FixationPointY'],
+    c=boyce_df['GazeEventDuration'],
+    cmap='viridis')
 plt.imshow(boyceimg, extent=[0, 1024, 0, 598])
+cbar = plt.colorbar()
+cbar.set_label('Gaze event duration /ms')
+plt.xlabel('Adjusted fixation point X /px')
+plt.ylabel('Adjusted fixation point Y /px')
 plt.title('boyce.jpg Rec 01 with correction')
 
 #%% [markdown]
@@ -220,6 +240,9 @@ duration = adjusted_df.loc[adjusted_df.MediaName ==
 cmap = matplotlib.cm.Reds
 norm = Normalize(vmin=duration.min(), vmax=duration.max())
 
+sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+sm.set_array([])
+
 plt.errorbar(
     xvals,
     yvals,
@@ -228,8 +251,16 @@ plt.errorbar(
     fmt='none',
     elinewidth=1,
     ecolor=cmap(norm(duration)))
+cbar = plt.colorbar(
+    mappable=sm, ticks=np.linspace(min(duration), max(duration), num=5))
+cbar.set_label('Fractional gaze event duration')
 plt.imshow(boyceimg, extent=[0, 1024, 0, 598])
+#plt.colorbar(cmap=cmap, norm=norm(duration))
+#cbar.set_label('Gaze event duration /ms')
+plt.xlabel('Adjusted fixation point X /px')
+plt.ylabel('Adjusted fixation point Y /px')
 plt.title('boyce.jpg all recordings (adjusted)')
+
 #%%
 from aptipy.analysis.utilities import load_images
 image_dict = load_images(img_parent_path)
@@ -252,6 +283,9 @@ for medianame, image in image_dict.items():
     cmap = matplotlib.cm.Reds
     norm = Normalize(vmin=duration.min(), vmax=duration.max())
 
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+
     plt.errorbar(
         xvals,
         yvals,
@@ -260,20 +294,25 @@ for medianame, image in image_dict.items():
         fmt='none',
         elinewidth=1,
         ecolor=cmap(norm(duration)))
+    cbar = plt.colorbar(
+        mappable=sm, ticks=np.linspace(min(duration), max(duration), num=5))
+    cbar.set_label('Fractional gaze event duration')
     plt.imshow(image, extent=[0, image.shape[1], 0, image.shape[0]])
+    plt.xlabel('Adjusted fixation point X /px')
+    plt.ylabel('Adjusted fixation point Y /px')
     plt.title(medianame + ' adjusted')
 #%% [markdown]
 # ## Export all the things
 
-#%%
-import pickle
+# #%%
+# import pickle
 
-adjusted_df.to_excel(
-    r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\eyetracking_analysis\adjusted_gazedata.xlsx'
-)
+# adjusted_df.to_excel(
+#     r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\eyetracking_analysis\adjusted_gazedata.xlsx'
+# )
 
-pickle.dump(image_dict, (open(
-    r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\eyetracking_analysis\images_dict.pkl',
-    'wb')))
+# pickle.dump(image_dict, (open(
+#     r'D:\Users\Naim\OneDrive\CloudDocs\UNIVERSITY\S8\MPhys_s8\eyetracking_analysis\images_dict.pkl',
+#     'wb')))
 
-#%%
+# #%%

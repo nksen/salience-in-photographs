@@ -73,12 +73,12 @@ def remove_prefix(text, prefix):
 
 
 class GazeBox(Box):
-    # Override cost to be total gaze density
+    #  cost to be total gaze density
     @property
-    def cost(self):
+    def gaze_heat_density(self):
         cost_val = np.sum(self._data) / self.size
         return cost_val
 
     @property
-    def total_cost(self):
+    def total_heat_density(self):
         return np.sum(self._s_map) / self._s_map.size

@@ -1,6 +1,5 @@
 """
 --Naim Sen--
---Toby Ticehurst--
 
 main.py
 

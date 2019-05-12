@@ -118,6 +118,7 @@ for rec, rec_df in dict_of_recordings.items():
 from aptipy.analysis.utilities import wavg, wvar, wcov
 
 errors_dict = dict()
+variances = []
 for rec, rec_df in dict_of_recordings.items():
     only_calibration = rec_df.loc[rec_df['ElementType'] == 'CalibrationPoint']
     wmean_x = wavg(only_calibration, 'FixationPointX', 'GazeEventDuration')
@@ -129,17 +130,22 @@ for rec, rec_df in dict_of_recordings.items():
                    'GazeEventDuration')
 
     errors_dict[rec] = [(wmean_x, wmean_y), (wvar_x, wvar_y, wcov_xy)]
+    current_vars = [np.sqrt(wvar_x), np.sqrt(wvar_y)]
+    variances.append(current_vars)
+    # plt.figure()
+    # plt.errorbar(
+    #     wmean_x, wmean_y, xerr=np.sqrt(wvar_x), yerr=np.sqrt(wvar_y), fmt='x')
+    # plt.plot(1366 / 2, 768 / 2, 'r+', markersize=14)
+    # plt.xlim(0, 1366)
+    # plt.ylim(0, 768)
+    # plt.xlabel('Mean fixation point X')
+    # plt.ylabel('Mean fixation point Y')
+    # plt.title(rec)
 
-    plt.figure()
-    plt.errorbar(
-        wmean_x, wmean_y, xerr=np.sqrt(wvar_x), yerr=np.sqrt(wvar_y), fmt='x')
-    plt.plot(1366 / 2, 768 / 2, 'r+', markersize=14)
-    plt.xlim(0, 1366)
-    plt.ylim(0, 768)
-    plt.xlabel('Mean fixation point X')
-    plt.ylabel('Mean fixation point Y')
-    plt.title(rec)
-
+#%%
+variances = np.array(variances)
+meanvar = np.mean(variances,axis=0)
+#meanvar = np.mean([errors_dict.values()[]])
 #%% [markdown]
 # ## Testing systematic correction:
 # The systematic offset is calculated for each recording and subtracted
